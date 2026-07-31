@@ -1,0 +1,323 @@
+{% load static %}
+<style>
+    .sidebar {
+        width: 260px;
+        height: 100vh;
+        background: #0A2E5C;
+        color: white;
+        position: fixed;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s ease, transform 0.3s ease;
+        z-index: 100;
+    }
+
+    .sidebar.collapsed {
+        width: 76px;
+    }
+
+    .sidebar.collapsed .logo h2,
+    .sidebar.collapsed .logo p,
+    .sidebar.collapsed .menu a span,
+    .sidebar.collapsed .profile div,
+    .sidebar.collapsed .logout span {
+        display: none;
+    }
+
+    .sidebar.collapsed .logo img {
+        width: 40px;
+    }
+
+    .sidebar.collapsed .menu a {
+        justify-content: center;
+    }
+
+    .sidebar.collapsed .profile {
+        justify-content: center;
+    }
+
+    .sidebar.collapsed .logout {
+        padding: 12px 0;
+    }
+
+    .logo {
+        text-align: center;
+        padding: 25px 20px;
+        position: relative;
+    }
+
+    .logo img {
+        width: 90px;
+        margin-bottom: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .logo h2 {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+
+    .logo p {
+        font-size: 12px;
+        line-height: 18px;
+        opacity: .85;
+    }
+
+    .collapse-btn {
+        position: absolute;
+        top: 20px;
+        right: -14px;
+        width: 28px;
+        height: 28px;
+        background: #FFB400;
+        color: #0A2E5C;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.collapsed .collapse-btn {
+        transform: rotate(180deg);
+    }
+
+    .sidebar hr {
+        border: none;
+        border-top: 1px solid rgba(255,255,255,.2);
+    }
+
+    .menu {
+        list-style: none;
+        margin-top: 20px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .menu li {
+        margin: 4px 12px;
+    }
+
+    .menu a {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        text-decoration: none;
+        color: rgba(255,255,255,.85);
+        padding: 13px 18px;
+        border-radius: 10px;
+        transition: .25s;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .menu a:hover {
+        background: #154A8A;
+        color: white;
+    }
+
+    .menu li.active a {
+        background: #FFB400;
+        color: #0A2E5C;
+        font-weight: bold;
+    }
+
+    .menu li.active a i {
+        color: #0A2E5C;
+    }
+
+    .menu i {
+        width: 22px;
+        text-align: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .bottom {
+        padding: 20px;
+        border-top: 1px solid rgba(255,255,255,.2);
+    }
+
+    .profile {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .profile i {
+        font-size: 32px;
+        flex-shrink: 0;
+    }
+
+    .profile h4 {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .profile small {
+        opacity: .8;
+    }
+
+    .logout {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        text-decoration: none;
+        background: #c62828;
+        padding: 12px;
+        border-radius: 8px;
+        justify-content: center;
+        transition: .3s;
+    }
+
+    .logout:hover {
+        background: #b71c1c;
+    }
+
+    .sidebar.collapsed ~ .main-wrapper {
+        margin-left: 76px;
+    }
+
+    .mobile-toggle {
+        display: none;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 200;
+        background: #0A2E5C;
+        color: white;
+        border: none;
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.5);
+        z-index: 99;
+    }
+
+    .overlay.active {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            width: 260px;
+        }
+
+        .sidebar.mobile-open {
+            transform: translateX(0);
+        }
+
+        .sidebar.collapsed {
+            width: 260px;
+        }
+
+        .sidebar.collapsed .logo h2,
+        .sidebar.collapsed .logo p,
+        .sidebar.collapsed .menu a span,
+        .sidebar.collapsed .profile div,
+        .sidebar.collapsed .logout span {
+            display: block;
+        }
+
+        .sidebar.collapsed .menu a {
+            justify-content: flex-start;
+        }
+
+        .collapse-btn {
+            display: none;
+        }
+
+        .mobile-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+</style>
+
+<button class="mobile-toggle" id="mobileToggle">
+    <i class="fa-solid fa-bars"></i>
+</button>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sidebar" id="sidebar">
+
+    <div class="logo">
+        <button class="collapse-btn" id="collapseBtn">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <img src="{% static 'users/images/dpwhlogo.png' %}" alt="DPWH Logo">
+        <h2>InfraTrack</h2>
+        <p>Infrastructure Issue Reporting and Monitoring System</p>
+    </div>
+
+    <hr>
+
+    <ul class="menu">
+        <li class="active">
+            <a href="#"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-circle-exclamation"></i><span>Issue Reports</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-road"></i><span>Infrastructure</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-clipboard-list"></i><span>Work Orders</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-location-dot"></i><span>Monitoring</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-map-location-dot"></i><span>GIS Map</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-chart-line"></i><span>Analytics</span></a>
+        </li>
+        <li>
+            <a href="#"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+        </li>
+    </ul>
+
+    <div class="bottom">
+        <div class="profile">
+            <i class="fa-solid fa-user-tie"></i>
+            <div>
+                <h4>District Engineer</h4>
+                <small>Administrator</small>
+            </div>
+        </div>
+
+        <a href="{% url 'logout' %}" class="logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+
+</div>
+
+<script>
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapseBtn');

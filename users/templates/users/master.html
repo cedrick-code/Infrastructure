@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}InfraTrack{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #F4F6F9;
+        }
+
+        .main-wrapper {
+            margin-left: 200px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content {
+            padding: 30px;
+        }
+        .alert{
+            padding:12px;
+            margin-bottom:20px;
+            border-radius:6px;
+            font-weight:bold;
+        }
+
+        .alert.error{
+            background:#f8d7da;
+            color:#842029;
+            border:1px solid #842029;
+        }
+
+        .alert.success{
+            background:#d1e7dd;
+            color:#0f5132;
+            border:1px solid #0f5132;
+        }
+
+        @media (max-width: 768px) {
+            .main-wrapper {
+                margin-left: 0;
+                padding-top: 70px;
+            }
+        }
+    </style>
+    {% block style %}
+    {% endblock %}
+</head>
+<body>
+    {% include "users/components/sidebar.html" %}
+
+    <div class="main-wrapper" id="mainWrapper">
+        {% include "users/components/navbar.html" %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

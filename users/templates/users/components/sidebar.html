@@ -1,0 +1,113 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+            background-color: #f1f5f9;
+        }
+        .sidebar{
+            width: 200px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            flex-shrink: 0;
+            background-color: #0f172a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+            overflow-y: auto;
+            z-index: 20;
+        }
+        .logo{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .logo img{
+            width: 48px;
+            flex-shrink: 0;
+        }
+        .dpwhname{
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+        .nav{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .nav a{
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #cbd5e1;
+            font-size: 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .nav a i{
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+        .nav a:hover{
+            background-color: #1e293b;
+            color: white;
+        }
+        .nav a.active{
+            background-color: #2563eb;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="{% static 'users/images/logtrans.png' %}" alt="DPWH Logo">
+            <div class="dpwhname">
+                Iligan City<br>
+                District Office
+            </div>
+        </div>
+
+        <div class="nav">
+            <a href="{% url 'district_dashboard' %}"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+            <a href="{% url 'personnel' %}"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPWH Iligan City District Engineering Office</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        body{
+            background-image: url("{% static 'users/images/background1.jpg' %}");
+
+            background-size: cover;
+            background-position: center;
+            min-height:100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        img {
+            width: 100%;
+            max-width: 600px;
+            margin: 10px;
+        }
+        .content {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            width: 100%;
+            padding: 0 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .content h1 {
+            font-size: clamp(20px, 5vw, 30px);
+            text-align: center;
+        }
+        .content p {
+            text-align: center;
+            font-size: clamp(13px, 3vw, 16px);
+            margin-top: 5px;
+        }
+        .card {
+            margin-top: 30px;
+            background: white;
+            width: 100%;
+            max-width: 350px;
+            padding: 20px;
+            border-radius: 10px;
+            color: black;
+        }
+        .card h2 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #1a1a2e;
+        }
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-bottom: -10px;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            border: 1.5px solid #1a1a2e;
+        }
+        input::placeholder {
+            color: #6b6b7a;
+        }
+        button {
+            padding: 10px;
+            border-radius: 6px;
+            background: #0a1338;
+            color: white;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .remember {
+            display: flex;
+            font-size: 14px;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+        }
+        .remember input {
+            width: 15px;
+        }
+        .footer {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 11px;
+            color: white;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .error-message {
+            background: #ffe5e5;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding-right: 50px; /* space for the toggle text */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #1a1a2e;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+        }
+        @media (max-width: 480px) {
+            .img {
+                max-width: 100px;
+                margin: 15px 0 5px;
+            }
+            .content h1 {
+                font-size: 20px;
+            }
+            .content p {
+                font-size: 13px;
+            }
+            .card {
+                max-width: 100%;
+                margin-left: 15px;
+                margin-right: 15px;
+                padding: 15px;
+            }
+            .card h2 {
+                font-size: 18px;
+            }
+            input[type="text"],
+            input[type="password"] {
+                font-size: 16px; /* prevents auto-zoom on iOS */
+            }
+            button {
+                font-size: 16px;
+                padding: 12px;
+            }
+            .footer {
+                font-size: 10px;
+                padding: 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="{% static 'users/images/dpwhlogo.png' %}" class="top-logo" alt="DPWH logo">
+
+    <div class="content">
+        <h1>DPWH Iligan City District Engineering Office</h1>
+        <p>GIS-Enabled Infrastructure Issue Reporting and Monitoring System</p>
+
+        <div class="card">
+            <h2>DPWH Personnel Portal</h2>
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" class="form-container" id="loginForm">
+                {% csrf_token %}
+
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter username" name="username"
+                       autocomplete="username" required>
+
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Enter password" name="password"
+                        autocomplete="current-password" required>
+                    <span class="toggle-password" id="togglePassword">Show</span>
+                </div>
+
+                <label class="remember">
+                    <input type="checkbox" name="remember"> Remember me
+                </label>
+
+                <button type="submit" id="loginBtn">Login</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {% now "Y" %} Department of Public Works and Highways Iligan City District Engineering Office</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function () {
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Logging in...';
+        });
+
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const passwordInput = document.getElementById('password');
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            this.textContent = isPassword ? 'Hide' : 'Show';
+        });
+    </script>
+    
+</body>
+</html>

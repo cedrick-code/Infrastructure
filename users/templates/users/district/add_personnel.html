@@ -1,0 +1,180 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Add Personnel
+{% endblock %}
+
+{% block page_title %}
+Add Personnel
+{% endblock %}
+
+
+<style>
+
+.form-card{
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.section-title{
+    margin-bottom:15px;
+    color:#0A2E5C;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group label{
+    margin-bottom:6px;
+    font-weight:bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+    font-size:14px;
+}
+
+.form-group textarea{
+    resize:vertical;
+    min-height:90px;
+}
+
+.full-width{
+    grid-column:1 / -1;
+}
+
+.button-group{
+    margin-top:25px;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+.cancel-btn{
+    padding:10px 20px;
+    text-decoration:none;
+    background:#6c757d;
+    color:white;
+    border-radius:6px;
+}
+
+.save-btn{
+    padding:10px 20px;
+    border:none;
+    background:#0A2E5C;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+</style>
+
+
+{% block content %}
+
+<div class="form-card">
+
+<form method="POST">
+
+    {% csrf_token %}
+
+    <h3 class="section-title">Account Information</h3>
+
+    <div class="form-grid">
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" required>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="confirm_password" required>
+        </div>
+
+    </div>
+
+    <br>
+
+    <h3 class="section-title">Personnel Information</h3>
+
+    <div class="form-grid">
+
+        <div class="form-group">
+            <label>Employee ID</label >
+            <input type="text" name="employee_id" required>
+        </div>
+
+        <div class="form-group">
+            <label>Position</label>
+            <select name="position" required>
+                <option value="">Select Position</option>
+                <option value="district_engineer">District Engineer</option>
+                <option value="fru">FRU Personnel</option>
+                <option value="field_engineer">Field Engineer</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>First Name</label>
+            <input type="text" name="first_name" required>
+        </div>
+
+        <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" name="last_name" required>
+        </div>
+
+        <div class="form-group">
+            <label>Contact Number</label>
+            <input type="text" name="contact_number" >
+        </div>
+
+        <div class="form-group full-width">
+            <label>Address</label>
+            <textarea name="address"></textarea>
+        </div>
+
+    </div>
+
+    <div class="button-group">
+
+        <a href="{% url 'personnel' %}" class="cancel-btn">
+            Cancel
+        </a>
+
+        <button type="submit" class="save-btn">
+            Save Personnel
+        </button>
+
+    </div>
+
+</form>
+
+</div>
+
+{% endblock %}

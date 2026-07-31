@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPWH Iligan City District Engineering Office</title>
+<style>
+  :root{
+    --navy:#101d4d;
+    --navy-deep:#0a1338;
+    --gold:#f2b41c;
+    --white:#ffffff;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      linear-gradient(180deg, rgba(10,19,56,.55) 0%, rgba(10,19,56,.35) 40%, rgba(10,19,56,.65) 100%),
+      linear-gradient(120deg, #3b4a63 0%, #5c6b82 35%, #8b7355 65%, #4a6b5c 100%);
+    background-attachment:fixed;
+    padding:24px;
+    position:relative;
+  }
+
+  .top-bar{
+    position:absolute;
+    top:0;left:0;right:0;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:18px 28px;
+    color:var(--white);
+  }
+
+  .seal{
+    width:52px;height:52px;
+    border-radius:50%;
+    background:var(--navy-deep);
+    border:2px solid var(--gold);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:11px;
+    color:var(--gold);
+    flex-shrink:0;
+  }
+
+  .top-bar .agency-name small{
+    display:block;
+    font-size:10px;
+    letter-spacing:.08em;
+    opacity:.85;
+  }
+
+  .top-bar .agency-name strong{
+    display:block;
+    font-size:15px;
+    letter-spacing:.03em;
+  }
+
+  .top-bar .tagline{
+    display:block;
+    font-size:10px;
+    font-style:italic;
+    opacity:.85;
+  }
+
+  .content{
+    width:100%;
+    max-width:460px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    color:var(--white);
+    margin-top:60px;
+  }
+
+  .content h1{
+    font-size:clamp(22px, 4vw, 30px);
+    font-weight:800;
+    text-shadow:0 2px 10px rgba(0,0,0,.4);
+  }
+
+  .content p.subtitle{
+    margin-top:6px;
+    font-size:14px;
+    opacity:.92;
+    text-shadow:0 1px 6px rgba(0,0,0,.4);
+  }
+
+  .card{
+    margin-top:26px;
+    width:100%;
+    background:rgba(255,255,255,.97);
+    border-radius:14px;
+    padding:32px 30px 28px;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+
+  .card h2{
+    color:var(--navy-deep);
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:20px;
+  }
+
+  .field{
+    position:relative;
+    margin-bottom:16px;
+  }
+
+  .field input{
+    width:100%;
+    padding:13px 16px;
+    border:1.5px solid #cfd4de;
+    border-radius:8px;
+    font-size:14px;
+    color:#1a1a2e;
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .field input::placeholder{
+    color:#9aa1ae;
+  }
+
+  .field input:focus{
+    border-color:var(--navy);
+    box-shadow:0 0 0 3px rgba(16,29,77,.12);
+  }
+
+  .field .toggle-pass{
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+    color:#8b93a3;
+    background:none;
+    border:none;
+    font-size:15px;
+    line-height:1;
+    padding:2px;
+  }
+
+  .remember{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    color:#4a4f5c;
+    margin-bottom:22px;
+    text-align:left;
+  }
+
+  .remember input{
+    width:15px;height:15px;
+    accent-color:var(--navy);
+    cursor:pointer;
+  }
+
+  .login-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:8px;
+    background:var(--navy-deep);
+    color:var(--white);
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .15s ease, transform .1s ease;
+  }
+
+  .login-btn:hover{ background:#050a24; }
+  .login-btn:active{ transform:scale(.99); }
+  .login-btn:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+
+  footer{
+    position:absolute;
+    bottom:16px;
+    left:0;right:0;
+    text-align:center;
+    color:var(--white);
+    font-size:12px;
+    opacity:.85;
+    padding:0 16px;
+    text-shadow:0 1px 6px rgba(0,0,0,.4);
+  }
+
+  @media (max-width: 480px){
+    .top-bar{
+      padding:14px 16px;
+    }
+    .top-bar .agency-name strong{ font-size:13px; }
+    .content{ margin-top:90px; }
+    .card{ padding:26px 20px 22px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="seal">DPWH</div>
+    <div class="agency-name">
+      <small>REPUBLIC OF THE PHILIPPINES</small>
+      <strong>DEPARTMENT OF PUBLIC WORKS AND HIGHWAYS</strong>
+      <span class="tagline">Right Projects, Right Cost, Right Quality, Right on Time, Right People</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <h1>DPWH Iligan City District Engineering Office</h1>
+    <p class="subtitle">GIS-Enabled Infrastructure Issue Reporting and Monitoring System</p>
+
+    <div class="card">
+      <h2>DPWH Personnel Portal</h2>
+      <form id="loginForm" autocomplete="off">
+        <div class="field">
+          <input type="text" id="username" name="username" placeholder="username" required>
+        </div>
+        <div class="field">
+          <input type="password" id="password" name="password" placeholder="password" required>
+          <button type="button" class="toggle-pass" id="togglePass" aria-label="Show password">&#128065;</button>
+        </div>
+        <label class="remember">
+          <input type="checkbox" id="remember" name="remember">
+          remember me
+        </label>
+        <button type="submit" class="login-btn">log in</button>
+      </form>
+    </div>
+  </div>
+
+  <footer>&copy; 2026 Department of Public Works and Highways Iligan City District Engineering Office</footer>
+
+  <script>
+    const toggleBtn = document.getElementById('togglePass');
+    const passInput = document.getElementById('password');
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = passInput.type === 'password';
+      passInput.type = isHidden ? 'text' : 'password';
+      toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Hook up your authentication logic here
+      console.log('Login submitted:', {
+        username: document.getElementById('username').value,
+        remember: document.getElementById('remember').checked
+      });
+    });
+  </script>
+
+</body>
+</html>

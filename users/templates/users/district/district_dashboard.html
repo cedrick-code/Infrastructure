@@ -1,0 +1,22 @@
+{% extends "users/master.html" %}
+{% load static %}
+
+
+{% block title %} District Engineer Dashboard {% endblock %}
+
+{% block style %}
+<style>
+    body{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<p>Login Successful!</p>
+<a href="{% url 'logout' %}">Logout</a>
+{% endblock %}
