@@ -8,7 +8,7 @@ Add Personnel
 Add Personnel
 {% endblock %}
 
-
+{% block style %}
 <style>
 
 .form-card{
@@ -82,7 +82,7 @@ Add Personnel
 }
 
 </style>
-
+{% endblock %}
 
 {% block content %}
 
@@ -125,8 +125,8 @@ Add Personnel
     <div class="form-grid">
 
         <div class="form-group">
-            <label>Employee ID</label >
-            <input type="text" name="employee_id" required>
+            <label>Employee ID</label>
+             <input type="text" value="Auto-generated on save" disabled>
         </div>
 
         <div class="form-group">
@@ -151,7 +151,7 @@ Add Personnel
 
         <div class="form-group">
             <label>Contact Number</label>
-            <input type="text" name="contact_number" >
+            <input type="text" name="contact_number">
         </div>
 
         <div class="form-group full-width">

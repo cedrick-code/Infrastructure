@@ -1,0 +1,192 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Work Orders
+{% endblock %}
+
+{% block page_title %}
+Work Orders
+{% endblock %}
+
+{% block style %}
+<style>
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+    }
+
+    .search-section{
+        display:flex;
+        gap:15px;
+        margin-bottom:25px;
+    }
+
+    .search-section input{
+        flex:1;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .search-section select{
+        width:220px;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .table-container{
+        background:white;
+        border-radius:10px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    thead{
+        background:#0A2E5C;
+        color:white;
+    }
+
+    th{
+        padding:15px;
+        text-align:left;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    .empty{
+        text-align:center;
+        color:gray;
+        padding:40px;
+    }
+
+    .action-cell{
+        display:flex;
+        gap:8px;
+    }
+
+    .view-btn, .approve-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        text-decoration:none;
+        display:inline-block;
+    }
+
+    .view-btn{
+        background:#e8f0fe;
+        color:#0A2E5C;
+    }
+
+    .view-btn:hover{
+        background:#cfe0fb;
+    }
+
+    .approve-btn{
+        background:#e6f7ec;
+        color:#1e7e34;
+    }
+
+    .approve-btn:hover{
+        background:#d0f0da;
+    }
+
+    .status-badge{
+        padding:5px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    .status-pending{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .status-approved{
+        background:#e6f7ec;
+        color:#1e7e34;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-section">
+
+    <input type="text" placeholder="Search work orders...">
+
+    <select>
+        <option>All Status</option>
+        <option>Pending</option>
+        <option>Approved</option>
+    </select>
+
+</div>
+
+<div class="table-container">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Report Title</th>
+                <th>Infrastructure</th>
+                <th>Assigned To</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for order in work_orders %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ order.report_title }}</td>
+                <td>{{ order.infrastructure }}</td>
+                <td>{{ order.assigned_to }}</td>
+                <td>
+                    <span class="status-badge {% if order.status == 'Approved' %}status-approved{% else %}status-pending{% endif %}">
+                        {{ order.status }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-cell">
+                        <a href="#" class="view-btn">View</a>
+                        <a href="#" class="approve-btn">Approve</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty">
+                    No work orders found.
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

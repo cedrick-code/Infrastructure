@@ -100,13 +100,47 @@
         </div>
 
         <div class="nav">
-            <a href="{% url 'district_dashboard' %}"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
-            <a href="{% url 'personnel' %}"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
-            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
-            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
-            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
-            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
-            <a href="#"><i class="fa-solid fa-users"></i><span>Personnel</span></a>
+
+            {% if request.user.role == "district_engineer" %}
+
+                <a href="{% url 'district_dashboard' %}" class="{% if request.resolver_match.url_name == 'district_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+                </a>
+                <a href="{% url 'personnel' %}" class="{% if request.resolver_match.url_name == 'personnel' or request.resolver_match.url_name == 'view_personnel' or request.resolver_match.url_name == 'edit_personnel' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i><span>Personnel</span>
+                </a>
+                <a href="{% url 'validated_reports' %}" class="{% if request.resolver_match.url_name == 'validated_reports' %}active{% endif %}">
+                    <i class="fa-solid fa-clipboard-check"></i><span>Validated Reports</span>
+                </a>
+                <a href="{% url 'work_orders' %}" class="{% if request.resolver_match.url_name == 'work_orders' %}active{% endif %}">
+                    <i class="fa-solid fa-file-signature"></i><span>Work Orders</span>
+                </a>
+                <a href="{% url 'repair_monitoring' %}" class="{% if request.resolver_match.url_name == 'repair_monitoring' %}active{% endif %}">
+                    <i class="fa-solid fa-wrench"></i><span>Repair Monitoring</span>
+                </a>
+                <a href="{% url 'report_history' %}" class="{% if request.resolver_match.url_name == 'report_history' %}active{% endif %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i><span>Report History</span>
+                </a>
+                <a href="{% url 'map' %}" class="{% if request.resolver_match.url_name == 'map' %}active{% endif %}">
+                    <i class="fa-solid fa-map-location-dot"></i><span>Map</span>
+                </a>
+
+            {% elif request.user.role == "fru" %}
+
+                <a href="{% url 'fru_dashboard' %}" class="{% if request.resolver_match.url_name == 'fru_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
+                </a>
+                <a href="{% url 'pending_reports' %}" class="{% if request.resolver_match.url_name == 'pending_reports' or request.resolver_match.url_name == 'screen_report' %}active{% endif %}">
+                    <i class="fa-solid fa-inbox"></i><span>Pending Reports</span>
+                </a>
+
+            {% endif %}
+
+            <a href="{% url 'logout' %}"
+                onclick="return confirm('Are you sure you want to logout?');">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </a>
         </div>
     </div>
 </body>

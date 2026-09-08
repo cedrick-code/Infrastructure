@@ -60,7 +60,17 @@
     {% include "users/components/sidebar.html" %}
 
     <div class="main-wrapper" id="mainWrapper">
-        {% include "users/components/navbar.html" %}
+
+        <div class="navbar">
+
+            <div class="navbar-left">
+                <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+            </div>
+
+            {% include "users/components/navbar.html" %}
+
+        </div>
+
         {% if messages %}
             {% for message in messages %}
                 <div class="alert {{ message.tags }}">

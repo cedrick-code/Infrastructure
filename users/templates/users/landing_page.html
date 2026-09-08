@@ -1,0 +1,785 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfraTrack | DPWH Iligan City</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* ---------- NAVBAR ---------- */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 60px;
+            z-index: 100;
+            transition: .3s;
+            background: transparent;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 46, 92, 0.96);
+            padding: 14px 60px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.15);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-brand img {
+            height: 42px;
+        }
+
+        .nav-brand h1 {
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .nav-brand span {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            color: #cdd8e6;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 35px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: .9;
+            transition: .2s;
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+        }
+
+        .login-btn {
+            background: white;
+            color: #0A2E5C !important;
+            padding: 10px 26px;
+            border-radius: 30px;
+            font-weight: 600 !important;
+            opacity: 1 !important;
+        }
+
+        .login-btn:hover {
+            background: #e8f0fe;
+        }
+
+        /* ---------- HERO ---------- */
+        .hero {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: url("{% static 'users/images/background.jpg' %}") center/cover no-repeat;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(10,46,92,.92) 0%, rgba(10,46,92,.65) 55%, rgba(10,46,92,.35) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 640px;
+            padding: 0 60px;
+            color: white;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hero-content h1 {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 18px;
+        }
+
+        .hero-content h1 span {
+            color: #6EA8FE;
+        }
+
+        .hero-content p {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #dbe4f0;
+            margin-bottom: 32px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-primary {
+            background: #6EA8FE;
+            color: #0A2E5C;
+            padding: 14px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .btn-primary:hover {
+            background: #8fbcff;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            border: 1.5px solid rgba(255,255,255,.5);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: .2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,.1);
+        }
+
+        .scroll-cue {
+            position: absolute;
+            bottom: 30px;
+            left: 60px;
+            color: rgba(255,255,255,.7);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 2;
+        }
+
+        /* ---------- STATS STRIP ---------- */
+        .stats-strip {
+            background: white;
+            padding: 40px 60px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 4px 20px rgba(0,0,0,.06);
+            position: relative;
+            z-index: 3;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat h2 {
+            font-size: 32px;
+            color: #0A2E5C;
+            font-weight: 800;
+        }
+
+        .stat p {
+            font-size: 13px;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        /* ---------- FEATURES ---------- */
+        .features {
+            padding: 100px 60px;
+            background: #F4F6F9;
+        }
+
+        .section-heading {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        .section-heading span {
+            color: #0A2E5C;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .section-heading h2 {
+            font-size: 34px;
+            color: #111827;
+            margin-top: 10px;
+            font-weight: 800;
+        }
+
+        .section-heading p {
+            color: #6B7280;
+            margin-top: 14px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 14px;
+            padding: 34px 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
+            transition: .25s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(10,46,92,.12);
+        }
+
+        .feature-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 12px;
+            background: #E8F0FE;
+            color: #0A2E5C;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 18px;
+        }
+
+        .feature-card h3 {
+            font-size: 17px;
+            color: #111827;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.6;
+        }
+
+        /* ---------- HOW IT WORKS ---------- */
+        .how-it-works {
+            padding: 100px 60px;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .how-it-works::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 380px;
+            height: 380px;
+            background: url("{% static 'users/images/logtrans.png' %}") center/contain no-repeat;
+            opacity: .08;
+        }
+
+        .steps {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .step-number {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #0A2E5C;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .step-text h4 {
+            color: #111827;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .step-text p {
+            color: #6B7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ---------- CITIZEN REPORT ---------- */
+        .citizen-report {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 60px;
+            padding: 100px 60px;
+            background: linear-gradient(135deg, #0A2E5C 0%, #154A8A 100%);
+            color: white;
+        }
+
+        .citizen-content {
+            max-width: 520px;
+        }
+
+        .citizen-tag {
+            display: inline-block;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 18px;
+        }
+
+        .citizen-content h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .citizen-content p {
+            color: #dbe4f0;
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 28px;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #6EA8FE;
+            color: #0A2E5C;
+            padding: 15px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            transition: .2s;
+        }
+
+        .btn-download:hover {
+            background: #8fbcff;
+            transform: translateY(-2px);
+        }
+
+        .citizen-note {
+            margin-top: 14px;
+            font-size: 12px;
+            color: #a9c0dd;
+        }
+
+        .citizen-image {
+            flex-shrink: 0;
+            width: 220px;
+            opacity: .9;
+        }
+
+        .citizen-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        @media (max-width: 900px) {
+            .citizen-report {
+                flex-direction: column;
+                text-align: center;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .citizen-image {
+                width: 160px;
+            }
+        }
+
+        /* ---------- CTA ---------- */
+        .cta {
+            background: url("{% static 'users/images/background1.jpg' %}") center/cover no-repeat;
+            position: relative;
+            padding: 90px 60px;
+            text-align: center;
+        }
+
+        .cta::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(10,46,92,.88);
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+            color: white;
+        }
+
+        .cta-content h2 {
+            font-size: 30px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta-content p {
+            color: #dbe4f0;
+            margin-bottom: 28px;
+            font-size: 15px;
+        }
+
+        /* ---------- FOOTER ---------- */
+        footer {
+            background: #071D3A;
+            color: #a9b8cc;
+            padding: 50px 60px 25px;
+        }
+
+        .footer-top {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,.1);
+            margin-bottom: 20px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-brand img {
+            height: 36px;
+        }
+
+        .footer-brand h4 {
+            color: white;
+            font-size: 15px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 40px;
+        }
+
+        .footer-links a {
+            color: #a9b8cc;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7d96;
+        }
+
+        @media (max-width: 900px) {
+            .navbar, .hero-content, .features, .how-it-works, .cta, footer {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .nav-links { display: none; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .stats-strip { flex-wrap: wrap; gap: 24px; }
+            .hero-content h1 { font-size: 34px; }
+            .footer-top { flex-direction: column; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-brand">
+            <img src="{% static 'users/images/dpwhlogo.png' %}" alt="DPWH Logo">
+            <h1>InfraTrack
+                <span>DPWH Iligan City District Office</span>
+            </h1>
+        </div>
+
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="{% url 'login' %}" class="login-btn">Log In</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-tag">GIS-Enabled Monitoring System</span>
+            <h1>Report and Track <span>Infrastructure Issues</span> Across Iligan City</h1>
+            <p>
+                InfraTrack connects citizens, field engineers, and the DPWH District Office
+                on one platform — from the moment an issue is reported to the moment
+                it's repaired, tracked live on the map.
+            </p>
+            <div class="hero-buttons">
+                <a href="{% url 'login' %}" class="btn-primary">Get Started</a>
+                <a href="#how-it-works" class="btn-secondary">Learn More</a>
+            </div>
+        </div>
+
+        <div class="scroll-cue">
+            <i class="fa-solid fa-chevron-down"></i> Scroll to explore
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats-strip">
+        <div class="stat">
+            <h2>4</h2>
+            <p>User Roles Connected</p>
+        </div>
+        <div class="stat">
+            <h2>Real-Time</h2>
+            <p>Repair Progress Tracking</p>
+        </div>
+        <div class="stat">
+            <h2>Geo-Tagged</h2>
+            <p>Issue Reporting via Map</p>
+        </div>
+        <div class="stat">
+            <h2>DPWH</h2>
+            <p>Iligan City District Office</p>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+        <div class="section-heading">
+            <span>What InfraTrack Offers</span>
+            <h2>One System, Every Stage of the Process</h2>
+            <p>From the citizen's first report to the District Engineer's final sign-off, every step is tracked, validated, and visible.</p>
+        </div>
+
+        <div class="feature-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <h3>Issue Reporting & Validation</h3>
+                <p>Citizens report infrastructure issues with photos and location; the Frontline Receiving Unit screens and validates each report.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-file-signature"></i></div>
+                <h3>Work Order Management</h3>
+                <p>District Engineers review validated reports and generate work orders for approved repair actions.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-wrench"></i></div>
+                <h3>Repair Progress Monitoring</h3>
+                <p>Field Engineers log repair updates in real time, so progress is visible from first response to closure.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+                <h3>Geo-Tagged Mapping</h3>
+                <p>Every report is pinned on an interactive map, powered by Google Maps, so issues are located at a glance.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-users"></i></div>
+                <h3>Role-Based Access</h3>
+                <p>Citizen Reporters, FRU, Field Engineers, District Engineers, and Admins each get a dashboard built for their role.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <h3>Full Report History</h3>
+                <p>Closed and rejected reports stay archived and searchable, keeping a full record of every resolved issue.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-heading">
+            <span>The Process</span>
+            <h2>How InfraTrack Works</h2>
+        </div>
+
+        <div class="steps">
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-text">
+                    <h4>Citizen Reports an Issue</h4>
+                    <p>A resident submits a report with a photo, description, and location pin of a road, bridge, or drainage problem.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">
+                    <h4>FRU Screens & Validates</h4>
+                    <p>The Frontline Receiving Unit reviews the report for completeness and forwards validated reports to the District Engineer.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">
+                    <h4>Work Order is Issued</h4>
+                    <p>The District Engineer approves the report and generates a work order, assigning it to a Field Engineer.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-text">
+                    <h4>Repair is Tracked to Completion</h4>
+                    <p>The Field Engineer logs repair progress until the issue is resolved and the report is officially closed.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOR CITIZENS -->
+    <section class="citizen-report">
+        <div class="citizen-content">
+
+            <span class="citizen-tag">For Citizens</span>
+            <h2>Spotted a Road, Bridge, or Drainage Issue?</h2>
+            <p>
+                Report it directly through the InfraTrack mobile app — snap a photo,
+                pin the location, and track its status from submission to repair.
+            </p>
+
+            <a href="#" class="btn-download">
+                <i class="fa-solid fa-download"></i>
+                InfraTrack
+            </a>
+
+            <p class="citizen-note">
+                Opens the InfraTrack mobile app download
+            </p>
+
+        </div>
+
+        <div class="citizen-image">
+            <img src="{% static 'users/images/logtrans.png' %}" alt="InfraTrack App">
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+        <div class="cta-content">
+            <h2>District Engineer</h2>
+            <p>Manage personnel, monitor validated reports, and oversee repair work orders across the district.</p>
+            <h2>Frontline Receiving Unit</h2>
+            <p>Screen incoming reports and route validated issues for repair monitoring.</p>
+            <h2>Citizen</h2>
+            <p>Submit infrastructure reports, track report status, and receive updates on repairs and resolutions in your area.</p>
+            <h2>Field Engineer</h2>
+            <p>Inspect reported infrastructure issues, validate field conditions, and update repair progress and work orders.</p>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-brand">
+                <img src="{% static 'users/images/dpwhlogo.png' %}" alt="DPWH Logo">
+                <div>
+                    <h4>InfraTrack</h4>
+                    <small>GIS-Enabled Infrastructure Issue Reporting and Monitoring System</small>
+                </div>
+            </div>
+
+            <div class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="{% url 'login' %}">Log In</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            &copy; 2026 DPWH Iligan City District Office. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', function () {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 40) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+    </script>
+
+</body>
+</html>

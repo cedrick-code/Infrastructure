@@ -149,6 +149,17 @@
             user-select: none;
             font-weight: bold;
         }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #0A2E5C;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 1px;
+            text-align: center;
+        }
         @media (max-width: 480px) {
             .img {
                 max-width: 100px;
@@ -219,6 +230,10 @@
                 </label>
 
                 <button type="submit" id="loginBtn">Login</button>
+
+                <a href="{% url 'landing_page' %}" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Home
+                </a>
             </form>
         </div>
 

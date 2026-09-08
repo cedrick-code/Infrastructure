@@ -1,8 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import User, Personnel 
+from .models import User, Personnel
 from django.contrib import messages
+from datetime import date
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import ( CitizenRegisterSerializer, LoginSerializer )
+from rest_framework.authtoken.models import Token
 
 def login_view(request):
 
@@ -29,9 +35,7 @@ def login_view(request):
                 return redirect("district_dashboard")
 
             elif user.role == "fru":
-                return render(request, "users/login.html", {
-                    "error": "FRU dashboard is under development."
-                })
+                return redirect("fru_dashboard")  
 
             elif user.role == "field_engineer":
                 return render(request, "users/login.html", {
@@ -69,7 +73,6 @@ def add_personnel(request):
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
-        employee_id = request.POST.get("employee_id")
         first_name = request.POST.get("first_name")
         last_name = request.POST.get("last_name")
         contact_number = request.POST.get("contact_number")
@@ -95,12 +98,6 @@ def add_personnel(request):
             messages.error(request, "Email already exists.")
             return redirect("add_personnel")
 
-        if Personnel.objects.filter(employee_id=employee_id).exists():
-
-            messages.error(request, "Employee ID already exists.")
-            return redirect("add_personnel")
-            
-
         # ----------------------------
         # Create User
         # ----------------------------
@@ -115,8 +112,10 @@ def add_personnel(request):
         )
 
         # ----------------------------
-        # Create Personnel
+        # Create Personnel (auto-generated Employee ID)
         # ----------------------------
+
+        employee_id = generate_employee_id()
 
         Personnel.objects.create(
             user=user,
@@ -126,12 +125,248 @@ def add_personnel(request):
             position=position,
         )
 
-        messages.success(request, "Personnel added successfully.")
+        messages.success(request, f"Personnel added successfully. Employee ID: {employee_id}")
 
         return redirect("personnel")
 
     return render(request, "users/district/add_personnel.html")
 
+def generate_employee_id():
+    """Generates the next sequential Employee ID for the current year, e.g. EMP-2026-0001."""
+
+    year = date.today().year
+    prefix = f"EMP-{year}-"
+
+    last_personnel = (
+        Personnel.objects
+        .filter(employee_id__startswith=prefix)
+        .order_by("-employee_id")
+        .first()
+    )
+
+    if last_personnel:
+        last_number = int(last_personnel.employee_id.split("-")[-1])
+        next_number = last_number + 1
+    else:
+        next_number = 1
+
+    return f"{prefix}{next_number:04d}"
+
 @login_required
 def personnel(request):
-    return render(request, "users/district/personnel.html")
+
+    personnel_list = Personnel.objects.select_related("user").all().order_by("-id")
+
+    context = {
+        "personnel_list": personnel_list,
+    }
+
+    return render(request, "users/district/personnel.html", context)
+
+@login_required
+def view_personnel(request, pk):
+
+    person = get_object_or_404(Personnel.objects.select_related("user"), pk=pk)
+
+    return render(request, "users/district/view_personnel.html", {
+        "person": person
+    })
+
+@login_required
+def delete_personnel(request, pk):
+
+    if request.method == "POST":
+
+        person = get_object_or_404(Personnel, pk=pk)
+        person.user.delete()   # deletes the linked User; Personnel cascades if FK is CASCADE
+
+        messages.success(request, "Personnel deleted successfully.")
+
+        return redirect("personnel")
+
+    return redirect("personnel")
+
+@login_required
+def edit_personnel(request, pk):
+
+    person = get_object_or_404(Personnel.objects.select_related("user"), pk=pk)
+    user = person.user
+
+    if request.method == "POST":
+
+        email = request.POST.get("email")
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        contact_number = request.POST.get("contact_number")
+        address = request.POST.get("address")
+        position = request.POST.get("position")
+        new_password = request.POST.get("new_password")
+
+        # ----------------------------
+        # Validation
+        # ----------------------------
+
+        if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+
+            messages.error(request, "Email already in use by another account.")
+            return redirect("edit_personnel", pk=pk)
+
+        # ----------------------------
+        # Update User
+        # ----------------------------
+
+        user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
+        user.role = position
+
+        if new_password:
+            user.set_password(new_password)
+
+        user.save()
+
+        # ----------------------------
+        # Update Personnel
+        # ----------------------------
+
+        person.contact_number = contact_number
+        person.address = address
+        person.position = position
+        person.save()
+
+        messages.success(request, "Personnel updated successfully.")
+
+        return redirect("personnel")
+
+    return render(request, "users/district/edit_personnel.html", {
+        "person": person
+    })
+
+@login_required
+def fru_dashboard(request):
+
+    context = {
+        "pending_count": 0,      # placeholder until Issue_Report exists
+        "screened_today": 0,
+        "notifications_count": 0,
+    }
+
+    return render(request, "users/fru/fru_dashboard.html", context)
+
+
+@login_required
+def pending_reports(request):
+
+    reports = []   # placeholder — will be Issue_Report.objects.filter(status="Pending Screening")
+
+    context = {
+        "reports": reports,
+    }
+
+    return render(request, "users/fru/pending_reports.html", context)
+
+
+@login_required
+def screen_report(request, pk):
+
+    # Placeholder — once Issue_Report exists:
+    # report = get_object_or_404(Issue_Report, pk=pk)
+
+    if request.method == "POST":
+
+        screening_result = request.POST.get("screening_result")
+        screening_remarks = request.POST.get("screening_remarks")
+
+        # report.status = screening_result
+        # report.screening_remarks = screening_remarks
+        # report.save()
+
+        messages.success(request, "Report screened successfully.")
+        return redirect("pending_reports")
+
+    return render(request, "users/fru/screen_report.html", {
+        "report_id": pk,
+    })
+
+def validated_reports(request):
+    # Placeholder for validated reports view
+    return render(request, "users/district/validated_reports.html")
+
+def work_orders(request):
+    # Placeholder for work orders view
+    return render(request, "users/district/work_orders.html")
+
+def repair_monitoring(request):
+    # Placeholder for repair monitoring view
+    return render(request, "users/district/repair_monitoring.html")
+
+def report_history(request):
+    # Placeholder for report history view
+    return render(request, "users/district/report_history.html")
+
+def map(request):
+    # Placeholder for map view
+    return render(request, "users/district/map.html")
+
+def landing_page(request):
+    return render(request, "users/landing_page.html")
+
+#important dont delete
+class CitizenRegisterAPIView(APIView):
+
+    def post(self, request):
+        serializer = CitizenRegisterSerializer(
+            data=request.data
+        )
+
+        if serializer.is_valid():
+            user = serializer.save()
+
+            return Response({
+                "message": "Citizen registered successfully.",
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "role": user.role,
+                }
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class LoginAPIView(APIView):
+
+    def post(self, request):
+        serializer = LoginSerializer(
+            data=request.data
+        )
+
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+
+            token, created = Token.objects.get_or_create(
+                user=user
+            )
+
+            return Response({
+                "message": "Login successful.",
+                "token": token.key,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "role": user.role,
+                }
+            }, status=status.HTTP_200_OK)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

@@ -10,133 +10,136 @@ Personnel Management
 {% block style %}
 <style>
     .page-header{
-
         display:flex;
-
         justify-content:space-between;
-
         align-items:center;
-
         margin-bottom:25px;
-
     }
 
     .page-header h2{
-
         color:#0A2E5C;
-
     }
 
     .add-btn{
-
         text-decoration:none;
-
         background:#0A2E5C;
-
         color:white;
-
         padding:10px 18px;
-
         border-radius:8px;
-
         font-weight:bold;
-
         transition:.3s;
-
     }
 
     .add-btn:hover{
-
         background:#154A8A;
-
     }
 
     .search-section{
-
         display:flex;
-
         gap:15px;
-
         margin-bottom:25px;
-
     }
 
     .search-section input{
-
         flex:1;
-
         padding:10px;
-
         border:1px solid #ccc;
-
         border-radius:6px;
-
     }
 
     .search-section select{
-
         width:220px;
-
         padding:10px;
-
         border:1px solid #ccc;
-
         border-radius:6px;
-
     }
 
     .table-container{
-
         background:white;
-
         border-radius:10px;
-
         overflow:hidden;
-
         box-shadow:0 2px 8px rgba(0,0,0,.08);
-
     }
 
     table{
-
         width:100%;
-
         border-collapse:collapse;
-
     }
 
     thead{
-
         background:#0A2E5C;
-
         color:white;
-
     }
 
     th{
-
         padding:15px;
-
         text-align:left;
-
     }
 
     td{
-
         padding:15px;
-
         border-bottom:1px solid #eee;
-
     }
 
     .empty{
-
         text-align:center;
-
         color:gray;
-
         padding:40px;
+    }
 
+    .action-cell{
+        display:flex;
+        gap:8px;
+    }
+
+    .view-btn, .edit-btn, .delete-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        text-decoration:none;
+        display:inline-block;
+    }
+
+    .view-btn{
+        background:#e8f0fe;
+        color:#0A2E5C;
+    }
+
+    .view-btn:hover{
+        background:#cfe0fb;
+    }
+
+    .edit-btn{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .edit-btn:hover{
+        background:#ffe6bf;
+    }
+
+    .delete-btn{
+        background:#fdeaea;
+        color:#c0392b;
+    }
+
+    .delete-btn:hover{
+        background:#f8d0d0;
+    }
+
+    .status-badge{
+        padding:5px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    .status-active{
+        background:#e6f7ec;
+        color:#1e7e34;
     }
 </style>
 
@@ -191,6 +194,50 @@ Personnel Management
 
         <tbody>
 
+            {% for person in personnel_list %}
+
+            <tr>
+
+                <td>{{ forloop.counter }}</td>
+                <td>{{ person.user.first_name }} {{ person.user.last_name }}</td>
+                <td>{{ person.user.username }}</td>
+                <td>{{ person.position }}</td>
+                <td>
+                    <span class="status-badge status-active">
+                        {% if person.user.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-cell">
+
+                        <a href="{% url 'view_personnel' person.pk %}" class="view-btn">
+                            View
+                        </a>
+
+                        <a href="{% url 'edit_personnel' person.pk %}" class="edit-btn">
+                            Edit
+                        </a>
+
+                        <form method="post"
+                              action="{% url 'delete_personnel' person.pk %}"
+                              onsubmit="return confirm('Delete this personnel record? This cannot be undone.');"
+                              style="display:inline;">
+
+                            {% csrf_token %}
+
+                            <button type="submit" class="delete-btn">
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </div>
+                </td>
+
+            </tr>
+
+            {% empty %}
+
             <tr>
 
                 <td colspan="6" class="empty">
@@ -201,10 +248,12 @@ Personnel Management
 
             </tr>
 
+            {% endfor %}
+
         </tbody>
 
     </table>
 
 </div>
 
-{% endblock %}  
+{% endblock %}

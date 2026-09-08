@@ -1,0 +1,122 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Pending Reports
+{% endblock %}
+
+{% block page_title %}
+Pending Screening Reports
+{% endblock %}
+
+{% block style %}
+<style>
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+    }
+
+    .table-container{
+        background:white;
+        border-radius:10px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    thead{
+        background:#0A2E5C;
+        color:white;
+    }
+
+    th{
+        padding:15px;
+        text-align:left;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    .empty{
+        text-align:center;
+        color:gray;
+        padding:40px;
+    }
+
+    .screen-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        text-decoration:none;
+        display:inline-block;
+        background:#0A2E5C;
+        color:white;
+    }
+
+    .screen-btn:hover{
+        background:#154A8A;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Pending Screening Reports</h2>
+</div>
+
+<div class="table-container">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Report Title</th>
+                <th>Citizen</th>
+                <th>Date Submitted</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for report in reports %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ report.title }}</td>
+                <td>{{ report.citizen_name }}</td>
+                <td>{{ report.date_submitted }}</td>
+                <td>
+                    <a href="{% url 'screen_report' report.pk %}" class="screen-btn">Screen</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty">
+                    No pending reports found.
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

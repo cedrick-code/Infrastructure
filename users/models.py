@@ -20,8 +20,11 @@ class User(AbstractUser):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    REQUIRED_FIELDS = ["email", "role"]
+
     def __str__(self):
         return self.username
+
 
 class Personnel(models.Model):
 
@@ -60,3 +63,28 @@ class Personnel(models.Model):
 
     def __str__(self):
         return f"{self.employee_id} - {self.user.get_full_name()}"
+
+class Citizen(models.Model):
+
+    citizen_id = models.AutoField(
+        primary_key=True
+    )
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="citizen_profile"
+    )
+
+    contact_number = models.CharField(
+        max_length=20
+    )
+
+    address = models.TextField()
+
+    date_created = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.user.get_full_name()

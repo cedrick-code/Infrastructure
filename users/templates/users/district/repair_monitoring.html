@@ -1,0 +1,219 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Repair Monitoring
+{% endblock %}
+
+{% block page_title %}
+Repair Monitoring
+{% endblock %}
+
+{% block style %}
+<style>
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+    }
+
+    .search-section{
+        display:flex;
+        gap:15px;
+        margin-bottom:25px;
+    }
+
+    .search-section input{
+        flex:1;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .search-section select{
+        width:220px;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .table-container{
+        background:white;
+        border-radius:10px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    thead{
+        background:#0A2E5C;
+        color:white;
+    }
+
+    th{
+        padding:15px;
+        text-align:left;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    .empty{
+        text-align:center;
+        color:gray;
+        padding:40px;
+    }
+
+    .progress-bar-fill{
+        width:var(--progress);
+        height:100%;
+        background:#0A2E5C;
+        border-radius:20px;
+    }
+
+    .action-cell{
+        display:flex;
+        gap:8px;
+    }
+
+    .view-btn, .close-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        text-decoration:none;
+        display:inline-block;
+    }
+
+    .view-btn{
+        background:#e8f0fe;
+        color:#0A2E5C;
+    }
+
+    .view-btn:hover{
+        background:#cfe0fb;
+    }
+
+    .close-btn{
+        background:#fdeaea;
+        color:#c0392b;
+    }
+
+    .close-btn:hover{
+        background:#f8d0d0;
+    }
+
+    .progress-bar-container{
+        width:100%;
+        background:#eee;
+        border-radius:20px;
+        height:10px;
+        overflow:hidden;
+    }
+
+    .progress-bar-fill{
+        height:100%;
+        background:#0A2E5C;
+        border-radius:20px;
+    }
+
+    .status-badge{
+        padding:5px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    .status-ongoing{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .status-completed{
+        background:#e6f7ec;
+        color:#1e7e34;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-section">
+
+    <input type="text" placeholder="Search repairs...">
+
+    <select>
+        <option>All Status</option>
+        <option>Ongoing</option>
+        <option>Completed</option>
+    </select>
+
+</div>
+
+<div class="table-container">
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Report Title</th>
+                <th>Infrastructure</th>
+                <th>Progress</th>
+                <th>Status</th>
+                <th>Last Update</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for repair in repair_updates %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ repair.report_title }}</td>
+                <td>{{ repair.infrastructure }}</td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge {% if repair.status == 'Completed' %}status-completed{% else %}status-ongoing{% endif %}">
+                        {{ repair.status }}
+                    </span>
+                </td>
+                <td>{{ repair.last_update }}</td>
+                <td>
+                    <div class="action-cell">
+                        <a href="#" class="view-btn">View</a>
+                        <a href="#" class="close-btn">Close</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty">
+                    No repair updates found.
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}
