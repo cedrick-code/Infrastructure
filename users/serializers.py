@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Citizen
+from .models import User, Citizen
 
 User = get_user_model()
 
@@ -87,3 +87,32 @@ class LoginSerializer(serializers.Serializer):
 
         data["user"] = user
         return data
+
+class CitizenProfileSerializer(serializers.ModelSerializer):
+
+    first_name = serializers.CharField(
+        source="user.first_name"
+    )
+
+    last_name = serializers.CharField(
+        source="user.last_name"
+    )
+
+    username = serializers.CharField(
+        source="user.username"
+    )
+
+    email = serializers.EmailField(
+        source="user.email"
+    )
+
+    class Meta:
+        model = Citizen
+        fields = [
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "contact_number",
+            "address",
+        ]

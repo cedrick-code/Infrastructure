@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from .models import User, Personnel
+from .models import User, Personnel, Citizen
 from django.contrib import messages
 from datetime import date
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import ( CitizenRegisterSerializer, LoginSerializer )
+from .serializers import ( CitizenRegisterSerializer, LoginSerializer, CitizenProfileSerializer, )
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 def login_view(request):
 
@@ -369,4 +371,39 @@ class LoginAPIView(APIView):
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+class CitizenProfileAPIView(APIView):
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        if user.role != "citizen":
+            return Response(
+                {
+                    "error": "This endpoint is for citizens only."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            citizen = user.citizen_profile
+
+        except Citizen.DoesNotExist:
+            return Response(
+                {
+                    "error": "Citizen profile not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = CitizenProfileSerializer(citizen)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
         )
