@@ -131,6 +131,27 @@ Infrastructure Details
         font-weight:normal;
     }
 
+    /* MAP */
+
+    .map-container{
+        width:100%;
+        height:400px;
+        border-radius:8px;
+        overflow:hidden;
+        margin-top:20px;
+    }
+
+    #map{
+        width:100%;
+        height:100%;
+    }
+
+    .map-note{
+        margin-top:10px;
+        font-size:13px;
+        color:#777;
+    }
+
     @media(max-width:700px){
 
         .page-header{
@@ -157,10 +178,15 @@ Infrastructure Details
             text-align:center;
         }
 
+        .map-container{
+            height:300px;
+        }
+
     }
 
 </style>
 {% endblock %}
+
 
 {% block content %}
 
@@ -193,6 +219,8 @@ Infrastructure Details
 
 </div>
 
+
+<!-- INFRASTRUCTURE INFORMATION -->
 
 <div class="details-card">
 
@@ -310,6 +338,8 @@ Infrastructure Details
 </div>
 
 
+<!-- LOCATION INFORMATION -->
+
 <div class="details-card">
 
     <h3 class="section-title">
@@ -363,6 +393,29 @@ Infrastructure Details
 </div>
 
 
+<!-- MAP -->
+
+<div class="details-card">
+
+    <h3 class="section-title">
+        Infrastructure Location Map
+    </h3>
+
+    <div class="map-container">
+
+        <div id="map"></div>
+
+    </div>
+
+    <p class="map-note">
+        The marker shows the official location of this infrastructure.
+    </p>
+
+</div>
+
+
+<!-- RECORD INFORMATION -->
+
 <div class="details-card">
 
     <h3 class="section-title">
@@ -386,5 +439,66 @@ Infrastructure Details
     </div>
 
 </div>
+
+
+<!-- GOOGLE MAP SCRIPT -->
+
+<script>
+
+    function initMap() {
+
+        const infrastructureLocation = {
+            lat: Number("{{ infrastructure.latitude }}"),
+            lng: Number("{{ infrastructure.longitude }}")
+        };
+
+
+        const map = new google.maps.Map(
+            document.getElementById("map"),
+            {
+                center: infrastructureLocation,
+                zoom: 16,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
+            }
+        );
+
+
+        const marker = new google.maps.Marker({
+            position: infrastructureLocation,
+            map: map,
+            title: "{{ infrastructure.infra_name|escapejs }}"
+        });
+
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="padding:5px;">
+                    <strong>{{ infrastructure.infra_name|escapejs }}</strong>
+                    <br>
+                    <span>{{ infrastructure.get_infra_type_display|escapejs }}</span>
+                </div>
+            `
+        });
+
+
+        marker.addListener("click", function() {
+            infoWindow.open(map, marker);
+        });
+
+    }
+
+</script>
+
+
+<!-- GOOGLE MAPS JAVASCRIPT API -->
+
+<script
+    src="https://maps.googleapis.com/maps/api/js?AIzaSyA3cGNjinffkwqWo6CAHpBo6IxljtRJm-w&callback=initMap"
+    async
+    defer>
+</script>
+
 
 {% endblock %}
