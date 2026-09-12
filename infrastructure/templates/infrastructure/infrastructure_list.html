@@ -1,0 +1,369 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Infrastructure Management
+{% endblock %}
+
+{% block page_title %}
+Infrastructure Management
+{% endblock %}
+
+{% block style %}
+<style>
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+        margin:0;
+    }
+
+    .page-header p{
+        margin:5px 0 0;
+        color:#777;
+    }
+
+    .add-btn{
+        text-decoration:none;
+        background:#0A2E5C;
+        color:white;
+        padding:10px 18px;
+        border-radius:8px;
+        font-weight:bold;
+        transition:.3s;
+    }
+
+    .add-btn:hover{
+        background:#154A8A;
+    }
+
+    .search-section{
+        display:flex;
+        gap:15px;
+        margin-bottom:25px;
+    }
+
+    .search-section input{
+        flex:1;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .search-section select{
+        width:220px;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:6px;
+    }
+
+    .table-container{
+        background:white;
+        border-radius:10px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    thead{
+        background:#0A2E5C;
+        color:white;
+    }
+
+    th{
+        padding:15px;
+        text-align:left;
+        white-space:nowrap;
+    }
+
+    td{
+        padding:15px;
+        border-bottom:1px solid #eee;
+    }
+
+    tbody tr:hover{
+        background:#f8fafc;
+    }
+
+    .empty{
+        text-align:center;
+        color:gray;
+        padding:40px;
+    }
+
+    .action-cell{
+        display:flex;
+        gap:8px;
+    }
+
+    .view-btn,
+    .edit-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        text-decoration:none;
+        display:inline-block;
+    }
+
+    .view-btn{
+        background:#e8f0fe;
+        color:#0A2E5C;
+    }
+
+    .view-btn:hover{
+        background:#cfe0fb;
+    }
+
+    .edit-btn{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .edit-btn:hover{
+        background:#ffe6bf;
+    }
+
+    .status-badge{
+        padding:5px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    .status-active{
+        background:#e6f7ec;
+        color:#1e7e34;
+    }
+
+    .status-maintenance{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .status-closed{
+        background:#fdeaea;
+        color:#c0392b;
+    }
+    .delete-btn{
+        border:none;
+        cursor:pointer;
+        padding:8px 14px;
+        border-radius:6px;
+        font-size:13px;
+        font-weight:bold;
+        background:#fdeaea;
+        color:#c0392b;
+    }
+
+    .delete-btn:hover{
+        background:#f8d0d0;
+    }
+
+    @media(max-width:900px){
+        .page-header{
+            flex-direction:column;
+            align-items:flex-start;
+            gap:15px;
+        }
+
+        .search-section{
+            flex-direction:column;
+        }
+
+        .search-section select{
+            width:100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h2>Infrastructure Management</h2>
+        <p>Manage DPWH infrastructure records.</p>
+    </div>
+
+    <a href="{% url 'infrastructure-add' %}" class="add-btn">
+        + Add Infrastructure
+    </a>
+
+</div>
+
+
+<div class="search-section">
+
+    <input
+        type="text"
+        placeholder="Search infrastructure...">
+
+    <select>
+
+        <option>All Types</option>
+        <option>Road</option>
+        <option>Bridge</option>
+        <option>Drainage</option>
+
+    </select>
+
+</div>
+
+
+<div class="table-container">
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>No.</th>
+                <th>Infrastructure</th>
+                <th>Type</th>
+                <th>Road Classification</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Managed By</th>
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for infrastructure in infrastructures %}
+
+            <tr>
+
+                <td>
+                    {{ forloop.counter }}
+                </td>
+
+                <td>
+                    <strong>
+                        {{ infrastructure.infra_name }}
+                    </strong>
+                </td>
+
+                <td>
+                    {{ infrastructure.get_infra_type_display }}
+                </td>
+
+                <td>
+                    {{ infrastructure.road_classification|default:"—" }}
+                </td>
+
+                <td>
+                    {{ infrastructure.location_description|default:"—" }}
+                </td>
+
+                <td>
+
+                    {% if infrastructure.status == "active" %}
+
+                        <span class="status-badge status-active">
+                            Active
+                        </span>
+
+                    {% elif infrastructure.status == "maintenance" %}
+
+                        <span class="status-badge status-maintenance">
+                            Maintenance
+                        </span>
+
+                    {% elif infrastructure.status == "closed" %}
+
+                        <span class="status-badge status-closed">
+                            Closed
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    {% if infrastructure.managed_by %}
+
+                        {{ infrastructure.managed_by.user.get_full_name }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    <div class="action-cell">
+
+                        <a
+                            href="{% url 'infrastructure_view' infrastructure.infrastructure_id %}"
+                            class="view-btn">
+                            View
+                        </a>
+
+                        <a href="{% url 'infrastructure-edit' infrastructure.infrastructure_id %}"
+                           class="edit-btn">
+                            Edit
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{% url 'infrastructure_delete' infrastructure.infrastructure_id %}"
+                            style="display:inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this infrastructure?');"
+                        >
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="delete-btn">
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+
+                <td colspan="8" class="empty">
+
+                    No infrastructure records found.
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

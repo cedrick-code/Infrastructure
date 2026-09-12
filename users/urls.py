@@ -22,6 +22,6 @@ urlpatterns = [
     path("pending-reports/<int:pk>/screen/", views.screen_report, name="screen_report"),
     #dont delete
     path("api/citizen/register/", CitizenRegisterAPIView.as_view(), name="citizen_register"),
-    path("api/login/", LoginAPIView.as_view(), name="login",),
+    path("api/login/", LoginAPIView.as_view(), name="api-login",),
     path("api/citizen/profile/", CitizenProfileAPIView.as_view(), name="citizen-profile",),
 ]

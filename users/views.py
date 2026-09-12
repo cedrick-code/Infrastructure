@@ -86,19 +86,25 @@ def add_personnel(request):
         # ----------------------------
 
         if password != confirm_password:
-
             messages.error(request, "Passwords do not match.")
-            return redirect("add_personnel")
+            return render(
+                request,
+                "users/district/add_personnel.html"
+            )
 
         if User.objects.filter(username=username).exists():
-
             messages.error(request, "Username already exists.")
-            return redirect("add_personnel")
+            return render(
+                request,
+                "users/district/add_personnel.html"
+            )
 
         if User.objects.filter(email=email).exists():
-
             messages.error(request, "Email already exists.")
-            return redirect("add_personnel")
+            return render(
+                request,
+                "users/district/add_personnel.html"
+            )
 
         # ----------------------------
         # Create User
@@ -114,7 +120,7 @@ def add_personnel(request):
         )
 
         # ----------------------------
-        # Create Personnel (auto-generated Employee ID)
+        # Create Personnel
         # ----------------------------
 
         employee_id = generate_employee_id()
@@ -127,11 +133,15 @@ def add_personnel(request):
             position=position,
         )
 
-        messages.success(request, f"Personnel added successfully. Employee ID: {employee_id}")
+        messages.success(
+            request,
+            f"Personnel added successfully. Employee ID: {employee_id}"
+        )
 
         return redirect("personnel")
 
     return render(request, "users/district/add_personnel.html")
+
 
 def generate_employee_id():
     """Generates the next sequential Employee ID for the current year, e.g. EMP-2026-0001."""

@@ -98,12 +98,12 @@ Add Personnel
 
         <div class="form-group">
             <label>Username</label>
-            <input type="text" name="username" required>
+            <input type="text" name="username" value="{{ request.POST.username }}" required>
         </div>
 
         <div class="form-group">
             <label>Email</label>
-            <input type="email" name="email" required>
+            <input type="email" name="email" value="{{ request.POST.email }}" required>
         </div>
 
         <div class="form-group">
@@ -133,25 +133,37 @@ Add Personnel
             <label>Position</label>
             <select name="position" required>
                 <option value="">Select Position</option>
-                <option value="district_engineer">District Engineer</option>
-                <option value="fru">FRU Personnel</option>
-                <option value="field_engineer">Field Engineer</option>
+
+                <option value="district_engineer"
+                    {% if request.POST.position == "district_engineer" %}selected{% endif %}>
+                    District Engineer
+                </option>
+
+                <option value="fru"
+                    {% if request.POST.position == "fru" %}selected{% endif %}>
+                    FRU Personnel
+                </option>
+
+                <option value="field_engineer"
+                    {% if request.POST.position == "field_engineer" %}selected{% endif %}>
+                    Field Engineer
+                </option>
             </select>
         </div>
 
         <div class="form-group">
             <label>First Name</label>
-            <input type="text" name="first_name" required>
+            <input type="text" name="first_name" value="{{ request.POST.first_name }}" required>
         </div>
 
         <div class="form-group">
             <label>Last Name</label>
-            <input type="text" name="last_name" required>
+            <input type="text" name="last_name" value="{{ request.POST.last_name }}" required>
         </div>
 
         <div class="form-group">
             <label>Contact Number</label>
-            <input type="text" name="contact_number">
+            <input type="text" name="contact_number" value="{{ request.POST.contact_number }}">
         </div>
 
         <div class="form-group full-width">

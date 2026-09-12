@@ -1,0 +1,390 @@
+{% extends "users/master.html" %}
+
+{% block title %}
+Infrastructure Details
+{% endblock %}
+
+{% block page_title %}
+Infrastructure Details
+{% endblock %}
+
+{% block style %}
+<style>
+
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+        margin:0;
+    }
+
+    .page-header p{
+        margin:5px 0 0;
+        color:#777;
+    }
+
+    .button-group{
+        display:flex;
+        gap:10px;
+    }
+
+    .back-btn,
+    .edit-btn{
+        padding:10px 18px;
+        border-radius:6px;
+        text-decoration:none;
+        font-weight:bold;
+    }
+
+    .back-btn{
+        background:#6c757d;
+        color:white;
+    }
+
+    .edit-btn{
+        background:#0A2E5C;
+        color:white;
+    }
+
+    .back-btn:hover{
+        background:#555;
+    }
+
+    .edit-btn:hover{
+        background:#154A8A;
+    }
+
+    .details-card{
+        background:white;
+        border-radius:10px;
+        padding:25px;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+        margin-bottom:20px;
+    }
+
+    .section-title{
+        color:#0A2E5C;
+        margin-top:0;
+        margin-bottom:20px;
+        padding-bottom:10px;
+        border-bottom:1px solid #eee;
+    }
+
+    .details-grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:20px;
+    }
+
+    .detail-item{
+        display:flex;
+        flex-direction:column;
+    }
+
+    .detail-label{
+        font-size:13px;
+        color:#777;
+        margin-bottom:5px;
+    }
+
+    .detail-value{
+        font-size:15px;
+        font-weight:bold;
+        color:#333;
+    }
+
+    .full-width{
+        grid-column:1 / -1;
+    }
+
+    .status-badge{
+        display:inline-block;
+        width:max-content;
+        padding:5px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold;
+    }
+
+    .status-active{
+        background:#e6f7ec;
+        color:#1e7e34;
+    }
+
+    .status-maintenance{
+        background:#fff4e0;
+        color:#a15c00;
+    }
+
+    .status-closed{
+        background:#fdeaea;
+        color:#c0392b;
+    }
+
+    .coordinates{
+        font-family:monospace;
+        font-weight:normal;
+    }
+
+    @media(max-width:700px){
+
+        .page-header{
+            flex-direction:column;
+            align-items:flex-start;
+            gap:15px;
+        }
+
+        .details-grid{
+            grid-template-columns:1fr;
+        }
+
+        .full-width{
+            grid-column:auto;
+        }
+
+        .button-group{
+            width:100%;
+        }
+
+        .back-btn,
+        .edit-btn{
+            flex:1;
+            text-align:center;
+        }
+
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h2>{{ infrastructure.infra_name }}</h2>
+
+        <p>
+            Infrastructure ID:
+            {{ infrastructure.infrastructure_id }}
+        </p>
+    </div>
+
+    <div class="button-group">
+
+        <a
+            href="{% url 'infrastructure_list' %}"
+            class="back-btn">
+            ← Back
+        </a>
+
+        <a
+            href="{% url 'infrastructure-edit' infrastructure.infrastructure_id %}"
+            class="edit-btn">
+            Edit
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="details-card">
+
+    <h3 class="section-title">
+        Infrastructure Information
+    </h3>
+
+    <div class="details-grid">
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Infrastructure ID
+            </span>
+
+            <span class="detail-value">
+                {{ infrastructure.infrastructure_id }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Infrastructure Type
+            </span>
+
+            <span class="detail-value">
+                {{ infrastructure.get_infra_type_display }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Infrastructure Name
+            </span>
+
+            <span class="detail-value">
+                {{ infrastructure.infra_name }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Road Classification
+            </span>
+
+            <span class="detail-value">
+                {{ infrastructure.road_classification|default:"—" }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Status
+            </span>
+
+            <span>
+
+                {% if infrastructure.status == "active" %}
+
+                    <span class="status-badge status-active">
+                        Active
+                    </span>
+
+                {% elif infrastructure.status == "maintenance" %}
+
+                    <span class="status-badge status-maintenance">
+                        Maintenance
+                    </span>
+
+                {% elif infrastructure.status == "closed" %}
+
+                    <span class="status-badge status-closed">
+                        Closed
+                    </span>
+
+                {% endif %}
+
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Managed By
+            </span>
+
+            <span class="detail-value">
+
+                {% if infrastructure.managed_by %}
+                    {{ infrastructure.managed_by.user.get_full_name }}
+                {% else %}
+                    —
+                {% endif %}
+
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="details-card">
+
+    <h3 class="section-title">
+        Location Information
+    </h3>
+
+    <div class="details-grid">
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Latitude
+            </span>
+
+            <span class="detail-value coordinates">
+                {{ infrastructure.latitude }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Longitude
+            </span>
+
+            <span class="detail-value coordinates">
+                {{ infrastructure.longitude }}
+            </span>
+
+        </div>
+
+
+        <div class="detail-item full-width">
+
+            <span class="detail-label">
+                Location Description
+            </span>
+
+            <span class="detail-value">
+
+                {{ infrastructure.location_description|default:"No location description provided." }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="details-card">
+
+    <h3 class="section-title">
+        Record Information
+    </h3>
+
+    <div class="details-grid">
+
+        <div class="detail-item">
+
+            <span class="detail-label">
+                Date Added
+            </span>
+
+            <span class="detail-value">
+                {{ infrastructure.date_added|date:"F d, Y h:i A" }}
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -109,8 +109,8 @@
                 <a href="{% url 'personnel' %}" class="{% if request.resolver_match.url_name == 'personnel' or request.resolver_match.url_name == 'view_personnel' or request.resolver_match.url_name == 'edit_personnel' %}active{% endif %}">
                     <i class="fa-solid fa-users"></i><span>Personnel</span>
                 </a>
-                <a href="{% url 'validated_reports' %}" class="{% if request.resolver_match.url_name == 'validated_reports' %}active{% endif %}">
-                    <i class="fa-solid fa-clipboard-check"></i><span>Validated Reports</span>
+                <a href="{% url 'infrastructure_list' %}" class="{% if request.resolver_match.url_name == 'validated_reports' %}active{% endif %}">
+                    <i class="fa-solid fa-clipboard-check"></i><span>Infrastructure</span>
                 </a>
                 <a href="{% url 'work_orders' %}" class="{% if request.resolver_match.url_name == 'work_orders' %}active{% endif %}">
                     <i class="fa-solid fa-file-signature"></i><span>Work Orders</span>
