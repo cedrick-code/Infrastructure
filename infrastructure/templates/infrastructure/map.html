@@ -1,0 +1,973 @@
+{% extends "users/master.html" %}
+
+
+{% block title %}
+Infrastructure Map
+{% endblock %}
+
+
+{% block page_title %}
+Infrastructure Map
+{% endblock %}
+
+
+{% block style %}
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+
+<style>
+
+    /* =========================
+       PAGE HEADER
+    ========================= */
+
+    .page-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    }
+
+    .page-header h2{
+        color:#0A2E5C;
+        margin:0;
+    }
+
+    .page-header p{
+        margin:5px 0 0;
+        color:#777;
+    }
+
+
+    /* =========================
+       MAP
+    ========================= */
+
+    .map-container{
+        background:white;
+        border-radius:10px;
+        overflow:hidden;
+        box-shadow:0 2px 8px rgba(0,0,0,.08);
+        height:600px;
+    }
+
+    #map{
+        width:100%;
+        height:100%;
+    }
+
+
+    /* =========================
+       LEGEND
+    ========================= */
+
+    .legend{
+        display:flex;
+        gap:20px;
+        margin-top:15px;
+        font-size:13px;
+        color:#333;
+    }
+
+    .legend-item{
+        display:flex;
+        align-items:center;
+        gap:8px;
+    }
+
+    .legend-dot{
+        width:12px;
+        height:12px;
+        border-radius:50%;
+        display:inline-block;
+    }
+
+    .dot-road{
+        background:#0A2E5C;
+    }
+
+    .dot-bridge{
+        background:#e2a03f;
+    }
+
+    .dot-drainage{
+        background:#1e7e34;
+    }
+
+
+    /* =========================
+       CUSTOM MAP MARKERS
+    ========================= */
+
+    .infra-marker{
+        width:30px;
+        height:30px;
+
+        border-radius:50%;
+
+        border:3px solid white;
+
+        display:flex;
+        align-items:center;
+        justify-content:center;
+
+        color:white;
+
+        font-size:13px;
+        font-weight:bold;
+
+        box-shadow:0 2px 6px rgba(0,0,0,.35);
+    }
+
+
+    .marker-road{
+        background:#0A2E5C;
+    }
+
+
+    .marker-bridge{
+        background:#e2a03f;
+    }
+
+
+    .marker-drainage{
+        background:#1e7e34;
+    }
+
+
+    /* =========================
+       MODAL
+    ========================= */
+
+    .modal{
+        display:none;
+
+        position:fixed;
+
+        z-index:9999;
+
+        left:0;
+        top:0;
+
+        width:100%;
+        height:100%;
+
+        background:rgba(0,0,0,.45);
+
+        align-items:center;
+        justify-content:center;
+    }
+
+
+    .modal-content{
+        background:white;
+
+        width:500px;
+
+        max-width:90%;
+
+        border-radius:12px;
+
+        padding:25px;
+
+        box-shadow:0 5px 20px rgba(0,0,0,.25);
+    }
+
+
+    .modal-header{
+        display:flex;
+
+        justify-content:space-between;
+
+        align-items:center;
+
+        margin-bottom:20px;
+    }
+
+
+    .modal-header h3{
+        margin:0;
+
+        color:#0A2E5C;
+    }
+
+
+    .close-modal{
+        border:none;
+
+        background:none;
+
+        font-size:28px;
+
+        cursor:pointer;
+
+        color:#777;
+    }
+
+
+    .close-modal:hover{
+        color:#333;
+    }
+
+
+    /* =========================
+       MODAL DETAILS
+    ========================= */
+
+    .detail-row{
+        margin-bottom:16px;
+    }
+
+
+    .detail-label{
+        font-size:12px;
+
+        color:#777;
+
+        margin-bottom:4px;
+    }
+
+
+    .detail-value{
+        font-weight:500;
+
+        color:#333;
+    }
+
+
+    .modal-button{
+        margin-top:10px;
+
+        width:100%;
+
+        padding:11px;
+
+        border:none;
+
+        border-radius:7px;
+
+        background:#0A2E5C;
+
+        color:white;
+
+        font-weight:bold;
+
+        cursor:pointer;
+    }
+
+
+    .modal-button:hover{
+        background:#154A8A;
+    }
+
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media(max-width:700px){
+
+        .map-container{
+            height:450px;
+        }
+
+        .legend{
+            flex-wrap:wrap;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<!-- =========================
+     PAGE HEADER
+========================= -->
+
+<div class="page-header">
+
+    <div>
+
+        <h2>
+            Infrastructure Map
+        </h2>
+
+        <p>
+            View DPWH infrastructure locations in Iligan City.
+        </p>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     MAP
+========================= -->
+
+<div class="map-container">
+
+    <div id="map"></div>
+
+</div>
+
+
+
+<!-- =========================
+     LEGEND
+========================= -->
+
+<div class="legend">
+
+    <div class="legend-item">
+
+        <span class="legend-dot dot-road"></span>
+
+        Road
+
+    </div>
+
+
+    <div class="legend-item">
+
+        <span class="legend-dot dot-bridge"></span>
+
+        Bridge
+
+    </div>
+
+
+    <div class="legend-item">
+
+        <span class="legend-dot dot-drainage"></span>
+
+        Drainage
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     INFRASTRUCTURE MODAL
+========================= -->
+
+<div
+    id="infrastructureModal"
+    class="modal"
+>
+
+
+    <div class="modal-content">
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="modal-header">
+
+            <h3 id="modalTitle">
+                Infrastructure Details
+            </h3>
+
+
+            <button
+                class="close-modal"
+                onclick="closeInfrastructureModal()"
+            >
+
+                &times;
+
+            </button>
+
+        </div>
+
+
+
+        <!-- INFRASTRUCTURE TYPE -->
+
+        <div class="detail-row">
+
+            <div class="detail-label">
+                Infrastructure Type
+            </div>
+
+            <div
+                class="detail-value"
+                id="modalType"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- ROAD CLASSIFICATION -->
+
+        <div class="detail-row">
+
+            <div class="detail-label">
+                Road Classification
+            </div>
+
+            <div
+                class="detail-value"
+                id="modalClassification"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- LOCATION -->
+
+        <div class="detail-row">
+
+            <div class="detail-label">
+                Location
+            </div>
+
+            <div
+                class="detail-value"
+                id="modalLocation"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- STATUS -->
+
+        <div class="detail-row">
+
+            <div class="detail-label">
+                Status
+            </div>
+
+            <div
+                class="detail-value"
+                id="modalStatus"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- COORDINATES -->
+
+        <div class="detail-row">
+
+            <div class="detail-label">
+                Coordinates
+            </div>
+
+            <div
+                class="detail-value"
+                id="modalCoordinates"
+            >
+            </div>
+
+        </div>
+
+
+
+        <!-- CLOSE BUTTON -->
+
+        <button
+            class="modal-button"
+            onclick="closeInfrastructureModal()"
+        >
+
+            Close
+
+        </button>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     DJANGO DATA
+========================= -->
+
+{{ infrastructure_data|json_script:"infrastructure-data" }}
+
+
+
+<!-- =========================
+     LEAFLET
+========================= -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+
+
+<script>
+
+
+    /* =========================
+       GET INFRASTRUCTURE DATA
+    ========================= */
+
+    const infrastructures = JSON.parse(
+
+        document
+            .getElementById("infrastructure-data")
+            .textContent
+
+    );
+
+
+
+    /* =========================
+       CREATE MAP
+    ========================= */
+
+    const map = L.map("map").setView(
+
+        [8.2280, 124.2452],
+
+        13
+
+    );
+
+
+
+    /* =========================
+       MAP TILES
+    ========================= */
+
+    L.tileLayer(
+
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+
+        {
+
+            maxZoom:19,
+
+            attribution:"Tiles &copy; Esri"
+
+        }
+
+    ).addTo(map);
+
+
+
+    /* =========================
+       CREATE MARKERS
+    ========================= */
+
+    infrastructures.forEach(
+
+        function(infrastructure){
+
+
+            const latitude = Number(
+
+                infrastructure.latitude
+
+            );
+
+
+            const longitude = Number(
+
+                infrastructure.longitude
+
+            );
+
+
+
+            /* Ignore invalid coordinates */
+
+            if(
+
+                isNaN(latitude) ||
+
+                isNaN(longitude)
+
+            ){
+
+                return;
+
+            }
+
+
+
+            /* =========================
+               DEFAULT MARKER
+            ========================= */
+
+            let markerClass = "marker-road";
+
+            let markerIcon = "R";
+
+
+
+            /* =========================
+               BRIDGE MARKER
+            ========================= */
+
+            if(
+
+                infrastructure.infra_type === "bridge"
+
+            ){
+
+                markerClass = "marker-bridge";
+
+                markerIcon = "B";
+
+            }
+
+
+
+            /* =========================
+               DRAINAGE MARKER
+            ========================= */
+
+            else if(
+
+                infrastructure.infra_type === "drainage"
+
+            ){
+
+                markerClass = "marker-drainage";
+
+                markerIcon = "D";
+
+            }
+
+
+
+            /* =========================
+               CUSTOM MARKER
+            ========================= */
+
+            const customIcon = L.divIcon({
+
+                className:"",
+
+                html:`
+
+                    <div
+                        class="infra-marker ${markerClass}"
+                    >
+
+                        ${markerIcon}
+
+                    </div>
+
+                `,
+
+                iconSize:[30,30],
+
+                iconAnchor:[15,15],
+
+                popupAnchor:[0,-15]
+
+            });
+
+
+
+            /* =========================
+               CREATE MARKER
+            ========================= */
+
+            const marker = L.marker(
+
+                [latitude,longitude],
+
+                {
+
+                    icon:customIcon
+
+                }
+
+            ).addTo(map);
+
+
+
+            /* =========================
+               POPUP
+            ========================= */
+
+            marker.bindPopup(`
+
+                <div style="padding:5px;">
+
+                    <strong>
+                        ${infrastructure.infra_name}
+                    </strong>
+
+                    <br>
+
+                    <span>
+                        ${infrastructure.infra_type}
+                    </span>
+
+                    <br><br>
+
+                    <button
+
+                        onclick="
+                            showInfrastructureDetails(
+                                ${infrastructure.infrastructure_id}
+                            )
+                        "
+
+                        style="
+                            background:#0A2E5C;
+                            color:white;
+                            border:none;
+                            padding:8px 12px;
+                            border-radius:6px;
+                            cursor:pointer;
+                            font-weight:bold;
+                        "
+
+                    >
+
+                        View Details
+
+                    </button>
+
+                </div>
+
+            `);
+
+        }
+
+    );
+
+
+
+    /* =========================
+       SHOW MODAL
+    ========================= */
+
+    function showInfrastructureDetails(id){
+
+
+        const infrastructure =
+
+            infrastructures.find(
+
+                function(item){
+
+                    return (
+
+                        item.infrastructure_id === id
+
+                    );
+
+                }
+
+            );
+
+
+
+        /* Stop if infrastructure
+           does not exist */
+
+        if(!infrastructure){
+
+            return;
+
+        }
+
+
+
+        /* =========================
+           SET MODAL INFORMATION
+        ========================= */
+
+        document.getElementById(
+
+            "modalTitle"
+
+        ).textContent =
+
+            infrastructure.infra_name;
+
+
+
+        document.getElementById(
+
+            "modalType"
+
+        ).textContent =
+
+            infrastructure.infra_type;
+
+
+
+        document.getElementById(
+
+            "modalClassification"
+
+        ).textContent =
+
+            infrastructure.road_classification ||
+
+            "N/A";
+
+
+
+        document.getElementById(
+
+            "modalLocation"
+
+        ).textContent =
+
+            infrastructure.location_description ||
+
+            "N/A";
+
+
+
+        document.getElementById(
+
+            "modalStatus"
+
+        ).textContent =
+
+            infrastructure.status ||
+
+            "N/A";
+
+
+
+        document.getElementById(
+
+            "modalCoordinates"
+
+        ).textContent =
+
+            Number(
+
+                infrastructure.latitude
+
+            ).toFixed(7)
+
+            +
+
+            ", "
+
+            +
+
+            Number(
+
+                infrastructure.longitude
+
+            ).toFixed(7);
+
+
+
+        /* =========================
+           SHOW MODAL
+        ========================= */
+
+        document.getElementById(
+
+            "infrastructureModal"
+
+        ).style.display = "flex";
+
+    }
+
+
+
+    /* =========================
+       CLOSE MODAL
+    ========================= */
+
+    function closeInfrastructureModal(){
+
+
+        document.getElementById(
+
+            "infrastructureModal"
+
+        ).style.display = "none";
+
+    }
+
+
+
+    /* =========================
+       CLOSE WHEN CLICKING
+       OUTSIDE MODAL
+    ========================= */
+
+    window.addEventListener(
+
+        "click",
+
+        function(event){
+
+
+            const modal =
+
+                document.getElementById(
+
+                    "infrastructureModal"
+
+                );
+
+
+            if(
+
+                event.target === modal
+
+            ){
+
+                closeInfrastructureModal();
+
+            }
+
+        }
+
+    );
+
+
+
+    /* =========================
+       FIX MAP SIZE
+    ========================= */
+
+    setTimeout(
+
+        function(){
+
+            map.invalidateSize();
+
+        },
+
+        200
+
+    );
+
+
+</script>
+
+
+{% endblock %}

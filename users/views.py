@@ -316,9 +316,6 @@ def report_history(request):
     # Placeholder for report history view
     return render(request, "users/district/report_history.html")
 
-def map(request):
-    # Placeholder for map view
-    return render(request, "users/district/map.html")
 
 def landing_page(request):
     return render(request, "users/landing_page.html")

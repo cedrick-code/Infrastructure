@@ -176,3 +176,25 @@ def delete_infrastructure(request, infrastructure_id):
         return redirect("infrastructure_list")
 
     return redirect("infrastructure_list")
+
+@login_required
+def map(request):
+
+    infrastructure_data = list(
+        Infrastructure.objects.values(
+            "infrastructure_id",
+            "infra_name",
+            "infra_type",
+            "latitude",
+            "longitude",
+            "location_description",
+        )
+    )
+
+    return render(
+        request,
+        "infrastructure/map.html",
+        {
+            "infrastructure_data": infrastructure_data
+        }
+    )

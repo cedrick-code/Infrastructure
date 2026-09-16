@@ -9,6 +9,12 @@ Infrastructure Details
 {% endblock %}
 
 {% block style %}
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
 <style>
 
     .page-header{
@@ -441,63 +447,58 @@ Infrastructure Details
 </div>
 
 
-<!-- GOOGLE MAP SCRIPT -->
+<!-- OPENSTREETMAP + LEAFLET -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
-    function initMap() {
+    const latitude = Number("{{ infrastructure.latitude }}");
+    const longitude = Number("{{ infrastructure.longitude }}");
 
-        const infrastructureLocation = {
-            lat: Number("{{ infrastructure.latitude }}"),
-            lng: Number("{{ infrastructure.longitude }}")
-        };
+    const infrastructureName =
+        "{{ infrastructure.infra_name|escapejs }}";
 
-
-        const map = new google.maps.Map(
-            document.getElementById("map"),
-            {
-                center: infrastructureLocation,
-                zoom: 16,
-                mapTypeControl: true,
-                streetViewControl: true,
-                fullscreenControl: true
-            }
-        );
+    const infrastructureType =
+        "{{ infrastructure.get_infra_type_display|escapejs }}";
 
 
-        const marker = new google.maps.Marker({
-            position: infrastructureLocation,
-            map: map,
-            title: "{{ infrastructure.infra_name|escapejs }}"
-        });
+    // Create map
+    const map = L.map("map").setView(
+        [latitude, longitude],
+        16
+    );
 
 
-        const infoWindow = new google.maps.InfoWindow({
-            content: `
-                <div style="padding:5px;">
-                    <strong>{{ infrastructure.infra_name|escapejs }}</strong>
-                    <br>
-                    <span>{{ infrastructure.get_infra_type_display|escapejs }}</span>
-                </div>
-            `
-        });
+    // OpenStreetMap tiles
+    L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            referrerPolicy: "strict-origin-when-cross-origin"
+        }
+    ).addTo(map);
 
 
-        marker.addListener("click", function() {
-            infoWindow.open(map, marker);
-        });
-
-    }
-
-</script>
+    // Infrastructure marker
+    const marker = L.marker(
+        [latitude, longitude]
+    ).addTo(map);
 
 
-<!-- GOOGLE MAPS JAVASCRIPT API -->
+    // Marker popup
+    marker.bindPopup(
+        `
+        <div style="padding:5px;">
+            <strong>${infrastructureName}</strong>
+            <br>
+            <span>${infrastructureType}</span>
+        </div>
+        `
+    ).openPopup();
 
-<script
-    src="https://maps.googleapis.com/maps/api/js?AIzaSyA3cGNjinffkwqWo6CAHpBo6IxljtRJm-w&callback=initMap"
-    async
-    defer>
 </script>
 
 
