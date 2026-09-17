@@ -27,7 +27,7 @@ DEBUG = True
 
 #192.168.1.21"
 
-ALLOWED_HOSTS = ["192.168.1.21", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["172.20.10.2", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -43,7 +43,11 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     'users',
     "infrastructure",
+    'reports',
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
