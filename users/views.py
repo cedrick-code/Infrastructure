@@ -257,9 +257,17 @@ def edit_personnel(request, pk):
 @login_required
 def fru_dashboard(request):
 
+    from reports.models import IssueReport
+    from django.utils import timezone
+
+    pending_count = IssueReport.objects.filter(status="Pending Screening").count()
+    screened_today = IssueReport.objects.filter(
+        screened_date__date=timezone.now().date()
+    ).count()
+
     context = {
-        "pending_count": 0,      # placeholder until Issue_Report exists
-        "screened_today": 0,
+        "pending_count": pending_count,
+        "screened_today": screened_today,
         "notifications_count": 0,
     }
 
@@ -269,7 +277,11 @@ def fru_dashboard(request):
 @login_required
 def pending_reports(request):
 
-    reports = []   # placeholder — will be Issue_Report.objects.filter(status="Pending Screening")
+    from reports.models import IssueReport
+
+    reports = IssueReport.objects.filter(
+        status="Pending Screening"
+    ).order_by('-reported_date')
 
     context = {
         "reports": reports,
@@ -281,23 +293,27 @@ def pending_reports(request):
 @login_required
 def screen_report(request, pk):
 
-    # Placeholder — once Issue_Report exists:
-    # report = get_object_or_404(Issue_Report, pk=pk)
+    from reports.models import IssueReport
+    from django.utils import timezone
+
+    report = get_object_or_404(IssueReport, pk=pk)
 
     if request.method == "POST":
 
         screening_result = request.POST.get("screening_result")
         screening_remarks = request.POST.get("screening_remarks")
 
-        # report.status = screening_result
-        # report.screening_remarks = screening_remarks
-        # report.save()
+        report.status = screening_result
+        report.screening_remarks = screening_remarks
+        report.screened_by = request.user.personnel
+        report.screened_date = timezone.now()
+        report.save()
 
         messages.success(request, "Report screened successfully.")
         return redirect("pending_reports")
 
     return render(request, "users/fru/screen_report.html", {
-        "report_id": pk,
+        "report": report,
     })
 
 def validated_reports(request):

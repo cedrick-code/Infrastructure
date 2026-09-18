@@ -104,8 +104,32 @@ Screen Report
 {% block content %}
 
 <div class="page-header">
-    <h2>Screen Report #{{ report_id }}</h2>
+    <h2>Screen Report #{{ report.id }}</h2>
     <a href="{% url 'pending_reports' %}" class="back-btn">&larr; Back to List</a>
+</div>
+
+<div class="form-card" style="margin-bottom:20px;">
+    <h3 style="color:#0A2E5C; margin-bottom:15px;">Report Details</h3>
+
+    <p><strong>Title:</strong> {{ report.title }}</p>
+    <p><strong>Description:</strong> {{ report.description }}</p>
+    <p><strong>Infrastructure Type:</strong> {{ report.get_infrastructure_type_display }}</p>
+    <p><strong>Severity:</strong> {{ report.severity_level }}</p>
+    <p><strong>Submitted by:</strong> {{ report.citizen.get_full_name }}</p>
+    <p><strong>Location:</strong> {{ report.geographic_address|default:"Not provided" }}
+        ({{ report.latitude }}, {{ report.longitude }})</p>
+    <p><strong>Date Submitted:</strong> {{ report.reported_date|date:"M d, Y g:i A" }}</p>
+
+    {% if report.photos.all %}
+    <div style="margin-top:15px;">
+        <strong>Photos:</strong>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            {% for photo in report.photos.all %}
+            <img src="{{ photo.image.url }}" style="width:120px; height:120px; object-fit:cover; border-radius:6px;">
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <div class="form-card">

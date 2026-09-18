@@ -99,8 +99,8 @@ Pending Screening Reports
             <tr>
                 <td>{{ forloop.counter }}</td>
                 <td>{{ report.title }}</td>
-                <td>{{ report.citizen_name }}</td>
-                <td>{{ report.date_submitted }}</td>
+                <td>{{ report.citizen.get_full_name }}</td>
+                <td>{{ report.reported_date|date:"M d, Y g:i A" }}</td>
                 <td>
                     <a href="{% url 'screen_report' report.pk %}" class="screen-btn">Screen</a>
                 </td>
