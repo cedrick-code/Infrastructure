@@ -14,6 +14,7 @@ class IssueReport(models.Model):
         ('Needs More Info', 'Needs More Information'),
         ('Inspected', 'Inspected'),
         ('For Work Order', 'For Work Order'),
+        ('Work Order Issued', 'Work Order Issued'),
         ('In Progress', 'In Progress'),
         ('Resolved', 'Resolved'),
     ]
@@ -67,4 +68,62 @@ class ReportPhoto(models.Model):
 class InspectionPhoto(models.Model):
     report = models.ForeignKey(IssueReport, on_delete=models.CASCADE, related_name='inspection_photos')
     image = models.ImageField(upload_to='inspection_photos/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class WorkOrder(models.Model):
+    STATUS_CHOICES = [
+        ('Issued', 'Issued'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+    ]
+
+    report = models.OneToOneField(
+        IssueReport, on_delete=models.CASCADE, related_name='work_order'
+    )
+    issued_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='issued_work_orders'
+    )
+    assigned_field_engineer = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='assigned_work_orders'
+    )
+    work_order_details = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Issued')
+    date_issued = models.DateTimeField(auto_now_add=True)
+    date_completed = models.DateTimeField(null=True, blank=True)
+    update_requested = models.BooleanField(default=False)
+    update_request_message = models.TextField(blank=True, null=True)
+    update_requested_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Work Order #{self.id} - {self.report.title}"
+
+class RepairUpdate(models.Model):
+    STATUS_CHOICES = [
+        ('Not Started', 'Not Started'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+    ]
+
+    work_order = models.ForeignKey(
+        WorkOrder, on_delete=models.CASCADE, related_name='repair_updates'
+    )
+    submitted_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='repair_updates'
+    )
+    status_update = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    progress_remarks = models.TextField(blank=True, null=True)
+    delay_reason = models.TextField(blank=True, null=True)
+    completion_details = models.TextField(blank=True, null=True)
+    update_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Update for WO#{self.work_order_id} - {self.status_update}"
+
+
+class RepairUpdatePhoto(models.Model):
+    repair_update = models.ForeignKey(RepairUpdate, on_delete=models.CASCADE, related_name='photos')
+    image = models.ImageField(upload_to='repair_photos/')
     uploaded_at = models.DateTimeField(auto_now_add=True)

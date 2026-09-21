@@ -1,3 +1,4 @@
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -320,17 +321,188 @@ def validated_reports(request):
     # Placeholder for validated reports view
     return render(request, "users/district/validated_reports.html")
 
+@login_required
 def work_orders(request):
-    # Placeholder for work orders view
-    return render(request, "users/district/work_orders.html")
 
+    from reports.models import IssueReport
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can access work orders."
+        )
+
+    reports = IssueReport.objects.filter(status="Inspected").order_by('-inspection_date')
+
+    context = {
+        "reports": reports,
+    }
+
+    return render(request, "users/district/work_orders.html", context)
+
+
+@login_required
+def create_work_order(request, pk):
+
+    from reports.models import IssueReport, WorkOrder
+    from users.models import Personnel
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can create work orders."
+        )
+
+    report = get_object_or_404(IssueReport, pk=pk)
+    field_engineers = Personnel.objects.filter(position="field_engineer").select_related("user")
+
+    if request.method == "POST":
+
+        assigned_engineer_id = request.POST.get("assigned_field_engineer")
+        work_order_details = request.POST.get("work_order_details")
+
+        assigned_engineer = get_object_or_404(Personnel, pk=assigned_engineer_id)
+
+        WorkOrder.objects.create(
+            report=report,
+            issued_by=request.user.personnel,
+            assigned_field_engineer=assigned_engineer,
+            work_order_details=work_order_details,
+        )
+
+        report.status = "Work Order Issued"
+        report.save()
+
+        messages.success(request, "Work order created and assigned successfully.")
+        return redirect("work_orders")
+
+    return render(request, "users/district/create_work_order.html", {
+        "report": report,
+        "field_engineers": field_engineers,
+    })
+
+@login_required
 def repair_monitoring(request):
-    # Placeholder for repair monitoring view
-    return render(request, "users/district/repair_monitoring.html")
 
+    from reports.models import WorkOrder
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can access repair monitoring."
+        )
+
+    work_orders = WorkOrder.objects.exclude(status='Issued').select_related(
+        'report', 'assigned_field_engineer__user'
+    ).prefetch_related('repair_updates').order_by('-date_issued')
+
+    progress_map = {
+        'Not Started': 10,
+        'In Progress': 50,
+        'Completed': 100,
+    }
+
+    for wo in work_orders:
+        wo.progress_percent = progress_map.get(wo.status, 10)
+
+    context = {
+        "work_orders": work_orders,
+    }
+
+    return render(request, "users/district/repair_monitoring.html", context)
+
+@login_required
+def view_work_order(request, pk):
+
+    from reports.models import WorkOrder
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can view this page."
+        )
+
+    work_order = get_object_or_404(
+        WorkOrder.objects.select_related('report', 'assigned_field_engineer__user', 'issued_by__user')
+        .prefetch_related('repair_updates__photos'),
+        pk=pk
+    )
+
+    return render(request, "users/district/view_work_order.html", {
+        "work_order": work_order,
+    })
+
+@login_required
+def request_work_order_update(request, pk):
+
+    from reports.models import WorkOrder
+    from django.utils import timezone
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can request updates."
+        )
+
+    work_order = get_object_or_404(WorkOrder, pk=pk)
+
+    if request.method == "POST":
+        message = request.POST.get("update_request_message", "")
+
+        work_order.update_requested = True
+        work_order.update_request_message = message
+        work_order.update_requested_date = timezone.now()
+        work_order.save()
+
+        messages.success(request, "Update request sent to the field engineer.")
+
+    return redirect("view_work_order", pk=pk)
+
+@login_required
 def report_history(request):
-    # Placeholder for report history view
-    return render(request, "users/district/report_history.html")
+
+    from reports.models import IssueReport
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can access report history."
+        )
+
+    reports = IssueReport.objects.select_related('citizen').order_by('-reported_date')
+
+    search_query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', '')
+
+    if search_query:
+        reports = reports.filter(title__icontains=search_query)
+
+    if status_filter:
+        reports = reports.filter(status=status_filter)
+
+    context = {
+        "reports": reports,
+        "search_query": search_query,
+        "status_filter": status_filter,
+        "status_choices": IssueReport.STATUS_CHOICES,
+    }
+
+    return render(request, "users/district/report_history.html", context)
+
+
+@login_required
+def view_report_history_detail(request, pk):
+
+    from reports.models import IssueReport
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can view this page."
+        )
+
+    report = get_object_or_404(
+        IssueReport.objects.select_related('citizen', 'screened_by__user', 'inspected_by__user')
+        .prefetch_related('photos', 'inspection_photos', 'work_order__repair_updates__photos'),
+        pk=pk
+    )
+
+    return render(request, "users/district/view_report_history.html", {
+        "report": report,
+    })
 
 
 def landing_page(request):

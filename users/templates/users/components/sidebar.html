@@ -112,7 +112,7 @@
                 <a href="{% url 'infrastructure_list' %}" class="{% if request.resolver_match.url_name == 'infrastructure_list' %}active{% endif %}">
                     <i class="fa-solid fa-clipboard-check"></i><span>Infrastructure</span>
                 </a>
-                <a href="{% url 'work_orders' %}" class="{% if request.resolver_match.url_name == 'work_orders' %}active{% endif %}">
+                <a href="{% url 'work_orders' %}" class="{% if request.resolver_match.url_name == 'work_orders' or request.resolver_match.url_name == 'create_work_order' %}active{% endif %}">
                     <i class="fa-solid fa-file-signature"></i><span>Work Orders</span>
                 </a>
                 <a href="{% url 'repair_monitoring' %}" class="{% if request.resolver_match.url_name == 'repair_monitoring' %}active{% endif %}">
