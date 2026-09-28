@@ -1,9 +1,14 @@
 from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .models import IssueReport, ReportPhoto, InspectionPhoto, WorkOrder, RepairUpdate, RepairUpdatePhoto
+from .models import (
+    IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
+    RepairUpdate, RepairUpdatePhoto, InfoRequest,
+)
 from .serializers import IssueReportSerializer, WorkOrderSerializer, RepairUpdateSerializer
+
 
 class IssueReportCreateView(generics.CreateAPIView):
     queryset = IssueReport.objects.all()
@@ -23,6 +28,8 @@ class IssueReportListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if self.request.user.role == 'citizen':
+            return IssueReport.objects.filter(citizen=self.request.user).order_by('-reported_date')
         return IssueReport.objects.all().order_by('-reported_date')
 
 
@@ -68,6 +75,7 @@ class SubmitInspectionView(generics.UpdateAPIView):
 
         serializer = self.get_serializer(report)
         return Response(serializer.data)
+
 
 class InspectedReportListView(generics.ListAPIView):
     """For District Engineer: reports ready for a work order."""
@@ -126,6 +134,7 @@ class FieldEngineerListView(generics.ListAPIView):
         ]
         return Response(data)
 
+
 class SubmitRepairUpdateView(generics.CreateAPIView):
     """For Field Engineer: submit a progress update on their work order."""
     queryset = RepairUpdate.objects.all()
@@ -159,3 +168,46 @@ class SubmitRepairUpdateView(generics.CreateAPIView):
             work_order.report.status = 'In Progress'
             work_order.report.save()
         work_order.save()
+
+
+class RespondToInfoRequestView(generics.GenericAPIView):
+    """For Citizen: send the extra information FRU asked for."""
+    queryset = IssueReport.objects.all()
+    serializer_class = IssueReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk):
+        # Citizens can only respond to their own reports
+        report = get_object_or_404(IssueReport, pk=pk, citizen=request.user)
+
+        if report.status != 'Needs More Info':
+            return Response({'error': 'This report is not waiting for more information.'}, status=400)
+
+        response_message = request.data.get('response_message', '').strip()
+        if not response_message:
+            return Response({'error': 'Please provide the additional information.'}, status=400)
+
+        info_request = report.info_requests.filter(
+            response_date__isnull=True
+        ).order_by('-requested_date').first()
+
+        # Covers reports flagged before this feature existed
+        if info_request is None:
+            info_request = InfoRequest.objects.create(
+                report=report,
+                request_message=report.screening_remarks or '',
+            )
+
+        info_request.response_message = response_message
+        info_request.response_date = timezone.now()
+        info_request.save()
+
+        for key in request.FILES:
+            if key.startswith('photo_'):
+                ReportPhoto.objects.create(report=report, image=request.FILES[key])
+
+        report.status = 'Pending Screening'
+        report.save()
+
+        return Response(self.get_serializer(report).data)

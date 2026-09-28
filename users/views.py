@@ -282,7 +282,7 @@ def pending_reports(request):
 
     reports = IssueReport.objects.filter(
         status="Pending Screening"
-    ).order_by('-reported_date')
+    ).prefetch_related('info_requests').order_by('-reported_date')
 
     context = {
         "reports": reports,
@@ -294,7 +294,7 @@ def pending_reports(request):
 @login_required
 def screen_report(request, pk):
 
-    from reports.models import IssueReport
+    from reports.models import IssueReport, InfoRequest
     from django.utils import timezone
 
     report = get_object_or_404(IssueReport, pk=pk)
@@ -309,6 +309,13 @@ def screen_report(request, pk):
         report.screened_by = request.user.personnel
         report.screened_date = timezone.now()
         report.save()
+
+        if screening_result == "Needs More Info":
+            InfoRequest.objects.create(
+                report=report,
+                requested_by=request.user.personnel,
+                request_message=screening_remarks,
+            )
 
         messages.success(request, "Report screened successfully.")
         return redirect("pending_reports")

@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import IssueReport, ReportPhoto, InspectionPhoto, WorkOrder, RepairUpdate, RepairUpdatePhoto
+from .models import (
+    IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
+    RepairUpdate, RepairUpdatePhoto, InfoRequest,
+)
+
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,28 +42,6 @@ class RepairUpdateSerializer(serializers.ModelSerializer):
         return None
 
 
-class IssueReportSerializer(serializers.ModelSerializer):
-    photos = ReportPhotoSerializer(many=True, read_only=True)
-    inspection_photos = InspectionPhotoSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = IssueReport
-        fields = [
-            'id', 'citizen', 'title', 'description', 'infrastructure_type',
-            'severity_level', 'status', 'latitude', 'longitude',
-            'geographic_address', 'location_method',
-            'reported_date', 'updated_date', 'photos',
-            'screened_by', 'screening_remarks', 'screened_date',
-            'inspected_by', 'inspection_remarks', 'recommended_action',
-            'inspection_date', 'inspection_photos',
-        ]
-        read_only_fields = [
-            'citizen', 'status', 'reported_date', 'updated_date',
-            'screened_by', 'screening_remarks', 'screened_date',
-            'inspected_by', 'inspection_remarks', 'recommended_action', 'inspection_date',
-        ]
-
-
 class WorkOrderSerializer(serializers.ModelSerializer):
     report_title = serializers.CharField(source='report.title', read_only=True)
     report_id = serializers.IntegerField(source='report.id', read_only=True)
@@ -81,3 +63,44 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         if obj.assigned_field_engineer:
             return obj.assigned_field_engineer.user.get_full_name()
         return None
+
+
+class InfoRequestSerializer(serializers.ModelSerializer):
+    requested_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InfoRequest
+        fields = [
+            'id', 'request_message', 'requested_by_name', 'requested_date',
+            'response_message', 'response_date',
+        ]
+
+    def get_requested_by_name(self, obj):
+        if obj.requested_by:
+            return obj.requested_by.user.get_full_name()
+        return None
+
+
+class IssueReportSerializer(serializers.ModelSerializer):
+    photos = ReportPhotoSerializer(many=True, read_only=True)
+    inspection_photos = InspectionPhotoSerializer(many=True, read_only=True)
+    work_order = WorkOrderSerializer(read_only=True, required=False)
+    info_requests = InfoRequestSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = IssueReport
+        fields = [
+            'id', 'citizen', 'title', 'description', 'infrastructure_type',
+            'severity_level', 'status', 'latitude', 'longitude',
+            'geographic_address', 'location_method',
+            'reported_date', 'updated_date', 'photos',
+            'screened_by', 'screening_remarks', 'screened_date',
+            'inspected_by', 'inspection_remarks', 'recommended_action',
+            'inspection_date', 'inspection_photos', 'work_order',
+            'info_requests',
+        ]
+        read_only_fields = [
+            'citizen', 'status', 'reported_date', 'updated_date',
+            'screened_by', 'screening_remarks', 'screened_date',
+            'inspected_by', 'inspection_remarks', 'recommended_action', 'inspection_date',
+        ]

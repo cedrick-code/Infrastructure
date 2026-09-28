@@ -127,3 +127,20 @@ class RepairUpdatePhoto(models.Model):
     repair_update = models.ForeignKey(RepairUpdate, on_delete=models.CASCADE, related_name='photos')
     image = models.ImageField(upload_to='repair_photos/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+class InfoRequest(models.Model):
+    report = models.ForeignKey(IssueReport, on_delete=models.CASCADE, related_name='info_requests')
+    requested_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='info_requests'
+    )
+    request_message = models.TextField(blank=True, null=True)
+    requested_date = models.DateTimeField(auto_now_add=True)
+    response_message = models.TextField(blank=True, null=True)
+    response_date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['requested_date']
+
+    def __str__(self):
+        return f"Info request for report #{self.report_id}"

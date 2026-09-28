@@ -3,7 +3,7 @@ from .views import (
     IssueReportCreateView, IssueReportListView, MyIssueReportListView,
     ValidatedIssueReportListView, SubmitInspectionView,
     InspectedReportListView, CreateWorkOrderView, MyWorkOrderListView,
-    FieldEngineerListView, SubmitRepairUpdateView,
+    FieldEngineerListView, SubmitRepairUpdateView, RespondToInfoRequestView,
 )
 
 urlpatterns = [
@@ -12,6 +12,7 @@ urlpatterns = [
     path('my-reports/', MyIssueReportListView.as_view(), name='my-reports'),
     path('validated/', ValidatedIssueReportListView.as_view(), name='validated-reports'),
     path('<int:pk>/inspect/', SubmitInspectionView.as_view(), name='submit-inspection'),
+    path('<int:pk>/respond/', RespondToInfoRequestView.as_view(), name='respond-info-request'),
     path('inspected/', InspectedReportListView.as_view(), name='inspected-reports'),
     path('work-orders/create/', CreateWorkOrderView.as_view(), name='work-order-create'),
     path('work-orders/my-orders/', MyWorkOrderListView.as_view(), name='my-work-orders'),
