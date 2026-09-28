@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
-    RepairUpdate, RepairUpdatePhoto, InfoRequest,
+    RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification,
 )
 
 
@@ -104,3 +104,8 @@ class IssueReportSerializer(serializers.ModelSerializer):
             'screened_by', 'screening_remarks', 'screened_date',
             'inspected_by', 'inspection_remarks', 'recommended_action', 'inspection_date',
         ]
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'kind', 'title', 'message', 'report', 'is_read', 'created_at']

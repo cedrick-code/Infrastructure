@@ -1,13 +1,18 @@
 from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
-    RepairUpdate, RepairUpdatePhoto, InfoRequest,
+    RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification,
 )
-from .serializers import IssueReportSerializer, WorkOrderSerializer, RepairUpdateSerializer
+from .serializers import (
+    IssueReportSerializer, WorkOrderSerializer, RepairUpdateSerializer,
+    NotificationSerializer,
+)
+from .notifications import notify_users, notify_role
 
 
 class IssueReportCreateView(generics.CreateAPIView):
@@ -21,6 +26,11 @@ class IssueReportCreateView(generics.CreateAPIView):
         for key in self.request.FILES:
             if key.startswith('photo_'):
                 ReportPhoto.objects.create(report=report, image=self.request.FILES[key])
+
+        notify_role(
+            'fru', 'report_submitted', 'New report submitted',
+            f'"{report.title}" is waiting for screening.', report,
+        )
 
 
 class IssueReportListView(generics.ListAPIView):
@@ -72,6 +82,15 @@ class SubmitInspectionView(generics.UpdateAPIView):
         for key in request.FILES:
             if key.startswith('inspection_photo_'):
                 InspectionPhoto.objects.create(report=report, image=request.FILES[key])
+
+        notify_role(
+            'district_engineer', 'report_inspected', 'Inspection completed',
+            f'"{report.title}" was inspected and is ready for a work order.', report,
+        )
+        notify_users(
+            [report.citizen], 'report_inspected', 'Your report was inspected',
+            f'A field engineer inspected "{report.title}".', report,
+        )
 
         serializer = self.get_serializer(report)
         return Response(serializer.data)
@@ -151,6 +170,7 @@ class SubmitRepairUpdateView(generics.CreateAPIView):
         if work_order.assigned_field_engineer != self.request.user.personnel:
             raise PermissionError('This work order is not assigned to you.')
 
+        previous_status = work_order.status
         repair_update = serializer.save(submitted_by=self.request.user.personnel)
 
         for key in self.request.FILES:
@@ -169,6 +189,25 @@ class SubmitRepairUpdateView(generics.CreateAPIView):
             work_order.report.save()
         work_order.save()
 
+        report = work_order.report
+        notify_role(
+            'district_engineer', 'repair_update', 'Repair update submitted',
+            f'{repair_update.status_update}: "{report.title}"', report,
+        )
+
+        # Only tell the citizen when the status actually changed
+        if repair_update.status_update != previous_status:
+            if repair_update.status_update == 'Completed':
+                notify_users(
+                    [report.citizen], 'report_resolved', 'Your report was resolved',
+                    f'The repair for "{report.title}" is complete.', report,
+                )
+            elif repair_update.status_update == 'In Progress':
+                notify_users(
+                    [report.citizen], 'repair_progress', 'Repair in progress',
+                    f'Work has started on "{report.title}".', report,
+                )
+
 
 class RespondToInfoRequestView(generics.GenericAPIView):
     """For Citizen: send the extra information FRU asked for."""
@@ -178,7 +217,6 @@ class RespondToInfoRequestView(generics.GenericAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, pk):
-        # Citizens can only respond to their own reports
         report = get_object_or_404(IssueReport, pk=pk, citizen=request.user)
 
         if report.status != 'Needs More Info':
@@ -192,7 +230,6 @@ class RespondToInfoRequestView(generics.GenericAPIView):
             response_date__isnull=True
         ).order_by('-requested_date').first()
 
-        # Covers reports flagged before this feature existed
         if info_request is None:
             info_request = InfoRequest.objects.create(
                 report=report,
@@ -210,4 +247,43 @@ class RespondToInfoRequestView(generics.GenericAPIView):
         report.status = 'Pending Screening'
         report.save()
 
+        notify_role(
+            'fru', 'info_provided', 'Citizen replied',
+            f'More information was added to "{report.title}". It is ready for re-screening.', report,
+        )
+
         return Response(self.get_serializer(report).data)
+
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)[:50]
+
+
+class UnreadNotificationCountView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        return Response({'count': count})
+
+
+class MarkNotificationReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+        return Response({'status': 'ok'})
+
+
+class MarkAllNotificationsReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return Response({'status': 'ok'})

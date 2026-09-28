@@ -135,7 +135,12 @@
                 </a>
 
             {% endif %}
-
+            <a href="{% url 'notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+                <i class="fa-solid fa-bell"></i><span>Notifications</span>
+                {% if unread_notifications_count %}
+                <span style="margin-left:auto; background:#ef4444; color:white; border-radius:10px; padding:1px 8px; font-size:12px; font-weight:bold;">{{ unread_notifications_count }}</span>
+                {% endif %}
+            </a>
             <a href="{% url 'logout' %}"
                 onclick="return confirm('Are you sure you want to logout?');">
                     <i class="fa-solid fa-right-from-bracket"></i>

@@ -23,8 +23,11 @@ urlpatterns = [
     path("fru-dashboard/", views.fru_dashboard, name="fru_dashboard"),
     path("pending-reports/", views.pending_reports, name="pending_reports"),
     path("pending-reports/<int:pk>/screen/", views.screen_report, name="screen_report"),
+    path("notifications/", views.notifications_page, name="notifications"),
+    path("notifications/<int:pk>/", views.open_notification, name="open_notification"),
     #dont delete
     path("api/citizen/register/", CitizenRegisterAPIView.as_view(), name="citizen_register"),
     path("api/login/", LoginAPIView.as_view(), name="api-login",),
     path("api/citizen/profile/", CitizenProfileAPIView.as_view(), name="citizen-profile",),
+    
 ]

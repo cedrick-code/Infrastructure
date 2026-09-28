@@ -4,6 +4,8 @@ from .views import (
     ValidatedIssueReportListView, SubmitInspectionView,
     InspectedReportListView, CreateWorkOrderView, MyWorkOrderListView,
     FieldEngineerListView, SubmitRepairUpdateView, RespondToInfoRequestView,
+    NotificationListView, UnreadNotificationCountView,
+    MarkNotificationReadView, MarkAllNotificationsReadView,
 )
 
 urlpatterns = [
@@ -18,4 +20,8 @@ urlpatterns = [
     path('work-orders/my-orders/', MyWorkOrderListView.as_view(), name='my-work-orders'),
     path('field-engineers/', FieldEngineerListView.as_view(), name='field-engineers'),
     path('work-orders/repair-update/', SubmitRepairUpdateView.as_view(), name='submit-repair-update'),
+    path('notifications/', NotificationListView.as_view(), name='notifications-list'),
+    path('notifications/unread-count/', UnreadNotificationCountView.as_view(), name='notifications-unread-count'),
+    path('notifications/read-all/', MarkAllNotificationsReadView.as_view(), name='notifications-read-all'),
+    path('notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='notification-read'),
 ]

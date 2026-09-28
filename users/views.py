@@ -2,9 +2,10 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from reports.models import Notification
 from .models import User, Personnel, Citizen
 from django.contrib import messages
-from datetime import date
+from datetime import date, timezone
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,55 +13,109 @@ from .serializers import ( CitizenRegisterSerializer, LoginSerializer, CitizenPr
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from functools import wraps
 
 def login_view(request):
 
     if request.user.is_authenticated:
-
         if request.user.role == "district_engineer":
             return redirect("district_dashboard")
+        if request.user.role == "fru":
+            return redirect("fru_dashboard")
+
     if request.method == "POST":
 
         username = request.POST.get("username")
         password = request.POST.get("password")
 
-        user = authenticate(
-            request,
-            username=username,
-            password=password
-        )
+        user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-
-            login(request, user)
-
-            if user.role == "district_engineer":
-                return redirect("district_dashboard")
-
-            elif user.role == "fru":
-                return redirect("fru_dashboard")  
-
-            elif user.role == "field_engineer":
-                return render(request, "users/login.html", {
-                    "error": "Field Engineer dashboard is under development."
-                })
-
-            elif user.role == "citizen":
-                return render(request, "users/login.html", {
-                    "error": "Citizen module is under development."
-                })
-
-        else:
-
+        if user is None:
             return render(request, "users/login.html", {
                 "error": "Invalid username or password."
             })
+
+        if user.role == "district_engineer":
+            login(request, user)
+            return redirect("district_dashboard")
+
+        if user.role == "fru":
+            login(request, user)
+            return redirect("fru_dashboard")
+
+        # Citizens and field engineers use the mobile app, so no web session
+        return render(request, "users/login.html", {
+            "error": "This account uses the mobile app. Please log in there."
+        })
 
     return render(request, "users/login.html")
 
 @login_required
 def district_dashboard(request):
-    return render(request, "users/district/district_dashboard.html")
+
+    from django.db.models import Count
+    from reports.models import IssueReport, WorkOrder
+    from infrastructure.models import Infrastructure
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can access the dashboard."
+        )
+
+    reports = IssueReport.objects.all()
+    total = reports.count()
+
+    status_counts = {
+        row["status"]: row["total"]
+        for row in reports.values("status").annotate(total=Count("id"))
+    }
+
+    needs_info = status_counts.get("Needs More Info", 0)
+    screening = status_counts.get("Pending Screening", 0) + needs_info
+    awaiting_inspection = status_counts.get("Validated", 0)
+    ongoing = status_counts.get("Work Order Issued", 0) + status_counts.get("In Progress", 0)
+    resolved = status_counts.get("Resolved", 0)
+    rejected = status_counts.get("Rejected", 0)
+
+    valid_total = total - rejected
+    resolution_rate = round(resolved / valid_total * 100) if valid_total else 0
+
+    # Items that need the District Engineer to act
+    ready_qs = reports.filter(status="Inspected").select_related("citizen").order_by("-inspection_date")
+    ready_count = ready_qs.count()
+
+    update_qs = WorkOrder.objects.filter(update_requested=True).select_related(
+        "report", "assigned_field_engineer__user"
+    ).order_by("-update_requested_date")
+    update_request_count = update_qs.count()
+
+    high_qs = reports.filter(severity_level="High").exclude(
+        status__in=["Resolved", "Rejected"]
+    ).order_by("-reported_date")
+    high_open_count = high_qs.count()
+
+    context = {
+        "total": total,
+        "screening": screening,
+        "needs_info": needs_info,
+        "awaiting_inspection": awaiting_inspection,
+        "ongoing": ongoing,
+        "resolved": resolved,
+        "resolution_rate": resolution_rate,
+        "ready_count": ready_count,
+        "ready_for_work_order": ready_qs[:5],
+        "update_request_count": update_request_count,
+        "update_requests": update_qs[:5],
+        "high_open_count": high_open_count,
+        "high_open": high_qs[:5],
+        "recent_activity": reports.select_related("citizen").order_by("-updated_date")[:8],
+        "active_work_orders": WorkOrder.objects.exclude(status="Completed").count(),
+        "infrastructure_total": Infrastructure.objects.count(),
+        "infrastructure_maintenance": Infrastructure.objects.filter(status="maintenance").count(),
+        "personnel_total": Personnel.objects.count(),
+    }
+
+    return render(request, "users/district/district_dashboard.html", context)
 
 def logout_view(request):
     logout(request)
@@ -262,14 +317,13 @@ def fru_dashboard(request):
     from django.utils import timezone
 
     pending_count = IssueReport.objects.filter(status="Pending Screening").count()
-    screened_today = IssueReport.objects.filter(
-        screened_date__date=timezone.now().date()
-    ).count()
+    start_of_today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    screened_today = IssueReport.objects.filter(screened_date__gte=start_of_today).count()
 
     context = {
         "pending_count": pending_count,
         "screened_today": screened_today,
-        "notifications_count": 0,
+        "notifications_count": Notification.objects.filter(recipient=request.user, is_read=False).count(),
     }
 
     return render(request, "users/fru/fru_dashboard.html", context)
@@ -295,11 +349,16 @@ def pending_reports(request):
 def screen_report(request, pk):
 
     from reports.models import IssueReport, InfoRequest
+    from reports.notifications import notify_users, notify_role
     from django.utils import timezone
 
     report = get_object_or_404(IssueReport, pk=pk)
 
     if request.method == "POST":
+
+        if not hasattr(request.user, "personnel"):
+            messages.error(request, "Your account has no personnel record, so it can't screen reports.")
+            return redirect("pending_reports")
 
         screening_result = request.POST.get("screening_result")
         screening_remarks = request.POST.get("screening_remarks")
@@ -315,6 +374,24 @@ def screen_report(request, pk):
                 report=report,
                 requested_by=request.user.personnel,
                 request_message=screening_remarks,
+            )
+            notify_users(
+                [report.citizen], 'info_requested', 'More information needed',
+                screening_remarks or f'Please add more details to "{report.title}".', report,
+            )
+        elif screening_result == "Validated":
+            notify_users(
+                [report.citizen], 'report_validated', 'Your report was validated',
+                f'"{report.title}" passed screening and is waiting for a field inspection.', report,
+            )
+            notify_role(
+                'field_engineer', 'report_validated', 'New report to inspect',
+                f'"{report.title}" is ready for inspection.', report,
+            )
+        elif screening_result == "Rejected":
+            notify_users(
+                [report.citizen], 'report_rejected', 'Your report was rejected',
+                screening_remarks or f'"{report.title}" was rejected during screening.', report,
             )
 
         messages.success(request, "Report screened successfully.")
@@ -351,7 +428,7 @@ def work_orders(request):
 def create_work_order(request, pk):
 
     from reports.models import IssueReport, WorkOrder
-    from users.models import Personnel
+    from reports.notifications import notify_users
 
     if request.user.role != "district_engineer":
         return HttpResponseForbidden(
@@ -362,6 +439,14 @@ def create_work_order(request, pk):
     field_engineers = Personnel.objects.filter(position="field_engineer").select_related("user")
 
     if request.method == "POST":
+
+        if not hasattr(request.user, "personnel"):
+            messages.error(request, "Your account has no personnel record, so it can't issue work orders.")
+            return redirect("work_orders")
+
+        if WorkOrder.objects.filter(report=report).exists():
+            messages.error(request, "A work order already exists for this report.")
+            return redirect("work_orders")
 
         assigned_engineer_id = request.POST.get("assigned_field_engineer")
         work_order_details = request.POST.get("work_order_details")
@@ -377,6 +462,15 @@ def create_work_order(request, pk):
 
         report.status = "Work Order Issued"
         report.save()
+
+        notify_users(
+            [assigned_engineer.user], 'work_order_assigned', 'New work order assigned',
+            f'You were assigned to repair "{report.title}".', report,
+        )
+        notify_users(
+            [report.citizen], 'work_order_issued', 'Repair scheduled',
+            f'A work order was issued for "{report.title}".', report,
+        )
 
         messages.success(request, "Work order created and assigned successfully.")
         return redirect("work_orders")
@@ -439,6 +533,7 @@ def view_work_order(request, pk):
 def request_work_order_update(request, pk):
 
     from reports.models import WorkOrder
+    from reports.notifications import notify_users
     from django.utils import timezone
 
     if request.user.role != "district_engineer":
@@ -455,6 +550,13 @@ def request_work_order_update(request, pk):
         work_order.update_request_message = message
         work_order.update_requested_date = timezone.now()
         work_order.save()
+
+        if work_order.assigned_field_engineer:
+            notify_users(
+                [work_order.assigned_field_engineer.user], 'update_requested', 'Update requested',
+                message or f'The district engineer asked for a progress update on "{work_order.report.title}".',
+                work_order.report,
+            )
 
         messages.success(request, "Update request sent to the field engineer.")
 
@@ -609,3 +711,61 @@ class CitizenProfileAPIView(APIView):
             serializer.data,
             status=status.HTTP_200_OK
         )
+
+@login_required
+def notifications_page(request):
+
+    from reports.models import Notification
+
+    if request.method == "POST":
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return redirect("notifications")
+
+    notifications = Notification.objects.filter(recipient=request.user)[:100]
+
+    return render(request, "users/notifications.html", {
+        "notifications": notifications,
+    })
+
+
+@login_required
+def open_notification(request, pk):
+
+    from reports.models import Notification
+
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    notification.is_read = True
+    notification.save(update_fields=["is_read"])
+
+    report = notification.report
+    if report is None:
+        return redirect("notifications")
+
+    if request.user.role == "fru":
+        if report.status == "Pending Screening":
+            return redirect("screen_report", pk=report.pk)
+        return redirect("pending_reports")
+
+    if request.user.role == "district_engineer":
+        work_order = getattr(report, "work_order", None)
+        if work_order:
+            return redirect("view_work_order", pk=work_order.pk)
+        if report.status == "Inspected":
+            return redirect("create_work_order", pk=report.pk)
+        return redirect("view_report_history_detail", pk=report.pk)
+
+    return redirect("notifications")
+
+def role_required(*roles):
+    """Login required, and the user's role must be one of `roles`."""
+    def decorator(view_func):
+        @login_required
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if request.user.role not in roles:
+                return HttpResponseForbidden(
+                    "You don't have permission to access this page."
+                )
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
