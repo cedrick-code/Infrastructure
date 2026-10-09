@@ -6,11 +6,11 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
-    RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification,
+    RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification, Feedback,
 )
 from .serializers import (
     IssueReportSerializer, WorkOrderSerializer, RepairUpdateSerializer,
-    NotificationSerializer,
+    NotificationSerializer, FeedbackSerializer,
 )
 from .notifications import notify_users, notify_role
 
@@ -287,3 +287,27 @@ class MarkAllNotificationsReadView(APIView):
     def post(self, request):
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
         return Response({'status': 'ok'})
+
+class SubmitFeedbackView(generics.CreateAPIView):
+    """Citizen: rate and comment on their own resolved report (once)."""
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        if request.user.role != 'citizen':
+            return Response({'error': 'Only citizens can submit feedback.'}, status=403)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        report = serializer.validated_data['report']
+
+        if report.citizen != request.user:
+            return Response({'error': 'You can only give feedback on your own report.'}, status=403)
+        if report.status != 'Resolved':
+            return Response({'error': 'Feedback is only allowed once the report is Resolved.'}, status=400)
+        if Feedback.objects.filter(report=report).exists():
+            return Response({'error': 'Feedback was already submitted for this report.'}, status=400)
+
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=201)

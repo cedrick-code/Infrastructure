@@ -163,3 +163,13 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} -> {self.recipient}"
+
+class Feedback(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='feedbacks')
+    report = models.OneToOneField('IssueReport', on_delete=models.CASCADE, related_name='feedback')
+    comment = models.TextField(blank=True)
+    rating = models.PositiveSmallIntegerField()  # 1 to 5
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback on report #{self.report_id} ({self.rating}/5)"

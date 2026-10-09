@@ -2,8 +2,8 @@ from rest_framework import serializers
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
     RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification,
+    Feedback,
 )
-
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -81,11 +81,23 @@ class InfoRequestSerializer(serializers.ModelSerializer):
         return None
 
 
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'report', 'rating', 'comment', 'date_created']
+        read_only_fields = ['id', 'date_created']
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError('Rating must be between 1 and 5.')
+        return value
+
 class IssueReportSerializer(serializers.ModelSerializer):
     photos = ReportPhotoSerializer(many=True, read_only=True)
     inspection_photos = InspectionPhotoSerializer(many=True, read_only=True)
     work_order = WorkOrderSerializer(read_only=True, required=False)
     info_requests = InfoRequestSerializer(many=True, read_only=True)
+    feedback = FeedbackSerializer(read_only=True)
 
     class Meta:
         model = IssueReport
@@ -97,7 +109,7 @@ class IssueReportSerializer(serializers.ModelSerializer):
             'screened_by', 'screening_remarks', 'screened_date',
             'inspected_by', 'inspection_remarks', 'recommended_action',
             'inspection_date', 'inspection_photos', 'work_order',
-            'info_requests',
+            'info_requests', 'feedback',
         ]
         read_only_fields = [
             'citizen', 'status', 'reported_date', 'updated_date',
