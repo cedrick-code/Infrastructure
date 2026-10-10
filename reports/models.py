@@ -13,6 +13,7 @@ class IssueReport(models.Model):
         ('Rejected', 'Rejected'),
         ('Needs More Info', 'Needs More Information'),
         ('Inspected', 'Inspected'),
+        ('Not Confirmed', 'Not Confirmed'),
         ('For Work Order', 'For Work Order'),
         ('Work Order Issued', 'Work Order Issued'),
         ('In Progress', 'In Progress'),
@@ -173,3 +174,93 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"Feedback on report #{self.report_id} ({self.rating}/5)"
+
+class FollowUpRequest(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Answered', 'Answered'),
+    ]
+
+    report = models.ForeignKey(IssueReport, on_delete=models.CASCADE, related_name='follow_ups')
+    citizen = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='follow_ups')
+    message = models.TextField()
+    submitted_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
+    response = models.TextField(blank=True, null=True)
+    responded_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='follow_up_responses'
+    )
+    responded_date = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['submitted_date']
+
+    def __str__(self):
+        return f"Follow-up on report #{self.report_id} ({self.status})"
+
+class ReportScreening(models.Model):
+    COMPLETENESS_CHOICES = [
+        ('Complete', 'Complete'),
+        ('Incomplete', 'Incomplete'),
+    ]
+    DUPLICATE_CHOICES = [
+        ('Not Duplicate', 'Not Duplicate'),
+        ('Duplicate', 'Duplicate'),
+    ]
+    JURISDICTION_CHOICES = [
+        ('Within Jurisdiction', 'Within Jurisdiction'),
+        ('Outside Jurisdiction', 'Outside Jurisdiction'),
+    ]
+    RESULT_CHOICES = [
+        ('Validated', 'Validated'),
+        ('Needs More Info', 'Needs More Information'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    report = models.ForeignKey(IssueReport, on_delete=models.CASCADE, related_name='screenings')
+    screened_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='report_screenings'
+    )
+    completeness_status = models.CharField(max_length=20, choices=COMPLETENESS_CHOICES, default='Complete')
+    duplicate_status = models.CharField(max_length=20, choices=DUPLICATE_CHOICES, default='Not Duplicate')
+    jurisdiction_status = models.CharField(max_length=25, choices=JURISDICTION_CHOICES, default='Within Jurisdiction')
+    screening_result = models.CharField(max_length=20, choices=RESULT_CHOICES)
+    remarks = models.TextField(blank=True, null=True)
+    screening_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-screening_date']
+
+    def __str__(self):
+        return f"Screening of report #{self.report_id}: {self.screening_result}"
+
+class InspectionValidation(models.Model):
+    RESULT_CHOICES = [
+        ('Confirmed', 'Confirmed'),
+        ('Not Confirmed', 'Not Confirmed'),
+    ]
+    SEVERITY_CHOICES = [
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+    ]
+
+    report = models.ForeignKey(IssueReport, on_delete=models.CASCADE, related_name='inspection_validations')
+    inspected_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='inspection_validations'
+    )
+    validation_result = models.CharField(max_length=20, choices=RESULT_CHOICES, default='Confirmed')
+    severity_rating = models.CharField(max_length=10, choices=SEVERITY_CHOICES)
+    findings = models.TextField()
+    recommended_repairs = models.TextField(blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
+    inspection_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-inspection_date']
+
+    def __str__(self):
+        return f"Inspection of report #{self.report_id}: {self.validation_result}"

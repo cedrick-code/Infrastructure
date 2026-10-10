@@ -25,6 +25,8 @@ urlpatterns = [
     path("pending-reports/<int:pk>/screen/", views.screen_report, name="screen_report"),
     path("notifications/", views.notifications_page, name="notifications"),
     path("notifications/<int:pk>/", views.open_notification, name="open_notification"),
+    path("follow-ups/", views.follow_ups, name="follow_ups"),
+    path("follow-ups/<int:pk>/reply/", views.reply_follow_up, name="reply_follow_up"),
     #dont delete
     path("api/citizen/register/", CitizenRegisterAPIView.as_view(), name="citizen_register"),
     path("api/login/", LoginAPIView.as_view(), name="api-login",),

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
     RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification,
-    Feedback,
+    Feedback, FollowUpRequest, InspectionValidation,
 )
 
 class ReportPhotoSerializer(serializers.ModelSerializer):
@@ -92,12 +92,73 @@ class FeedbackSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Rating must be between 1 and 5.')
         return value
 
+class FollowUpRequestSerializer(serializers.ModelSerializer):
+    responded_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FollowUpRequest
+        fields = [
+            'id', 'report', 'message', 'submitted_date', 'status',
+            'response', 'responded_by_name', 'responded_date',
+        ]
+        read_only_fields = [
+            'id', 'submitted_date', 'status', 'response',
+            'responded_by_name', 'responded_date',
+        ]
+
+    def get_responded_by_name(self, obj):
+        if obj.responded_by:
+            return obj.responded_by.user.get_full_name()
+        return None
+
+    def validate_message(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('Please write your question.')
+        return value.strip()
+
+class InspectionValidationSerializer(serializers.ModelSerializer):
+    inspected_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InspectionValidation
+        fields = [
+            'id', 'validation_result', 'severity_rating', 'findings',
+            'recommended_repairs', 'comments', 'inspected_by_name', 'inspection_date',
+        ]
+
+    def get_inspected_by_name(self, obj):
+        if obj.inspected_by:
+            return obj.inspected_by.user.get_full_name()
+        return None
+
+class MyInspectionSerializer(InspectionValidationSerializer):
+    report_id = serializers.IntegerField(source='report.id', read_only=True)
+    report_title = serializers.CharField(source='report.title', read_only=True)
+    report_address = serializers.CharField(source='report.geographic_address', read_only=True)
+    report_status = serializers.CharField(source='report.status', read_only=True)
+    photos = serializers.SerializerMethodField()
+
+    class Meta(InspectionValidationSerializer.Meta):
+        fields = InspectionValidationSerializer.Meta.fields + [
+            'report_id', 'report_title', 'report_address', 'report_status', 'photos',
+        ]
+
+    def get_photos(self, obj):
+        request = self.context.get('request')
+        urls = []
+        for photo in obj.report.inspection_photos.all():
+            url = photo.image.url
+            urls.append(request.build_absolute_uri(url) if request else url)
+        return urls
+
 class IssueReportSerializer(serializers.ModelSerializer):
     photos = ReportPhotoSerializer(many=True, read_only=True)
     inspection_photos = InspectionPhotoSerializer(many=True, read_only=True)
     work_order = WorkOrderSerializer(read_only=True, required=False)
     info_requests = InfoRequestSerializer(many=True, read_only=True)
     feedback = FeedbackSerializer(read_only=True)
+    inspection_validations = InspectionValidationSerializer(many=True, read_only=True)
+    follow_ups = FollowUpRequestSerializer(many=True, read_only=True)
 
     class Meta:
         model = IssueReport
@@ -109,7 +170,7 @@ class IssueReportSerializer(serializers.ModelSerializer):
             'screened_by', 'screening_remarks', 'screened_date',
             'inspected_by', 'inspection_remarks', 'recommended_action',
             'inspection_date', 'inspection_photos', 'work_order',
-            'info_requests', 'feedback',
+            'info_requests', 'feedback', 'follow_ups', 'inspection_validations',
         ]
         read_only_fields = [
             'citizen', 'status', 'reported_date', 'updated_date',

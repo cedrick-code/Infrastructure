@@ -348,7 +348,7 @@ def pending_reports(request):
 @login_required
 def screen_report(request, pk):
 
-    from reports.models import IssueReport, InfoRequest
+    from reports.models import IssueReport, InfoRequest, ReportScreening
     from reports.notifications import notify_users, notify_role
     from django.utils import timezone
 
@@ -362,12 +362,40 @@ def screen_report(request, pk):
 
         screening_result = request.POST.get("screening_result")
         screening_remarks = request.POST.get("screening_remarks")
+        completeness_status = request.POST.get("completeness_status", "Complete")
+        duplicate_status = request.POST.get("duplicate_status", "Not Duplicate")
+        jurisdiction_status = request.POST.get("jurisdiction_status", "Within Jurisdiction")
+
+        failed_checks = (
+            completeness_status != "Complete"
+            or duplicate_status != "Not Duplicate"
+            or jurisdiction_status != "Within Jurisdiction"
+        )
+        if screening_result == "Validated" and failed_checks:
+            messages.error(
+                request,
+                "A report that is incomplete, a duplicate, or outside DPWH Iligan "
+                "jurisdiction cannot be validated. Choose Needs More Info or Rejected."
+            )
+            return render(request, "users/fru/screen_report.html", {
+                "report": report,
+            })
 
         report.status = screening_result
         report.screening_remarks = screening_remarks
         report.screened_by = request.user.personnel
         report.screened_date = timezone.now()
         report.save()
+
+        ReportScreening.objects.create(
+            report=report,
+            screened_by=request.user.personnel,
+            completeness_status=completeness_status,
+            duplicate_status=duplicate_status,
+            jurisdiction_status=jurisdiction_status,
+            screening_result=screening_result,
+            remarks=screening_remarks or "",
+        )
 
         if screening_result == "Needs More Info":
             InfoRequest.objects.create(
@@ -401,9 +429,23 @@ def screen_report(request, pk):
         "report": report,
     })
 
+@login_required
 def validated_reports(request):
-    # Placeholder for validated reports view
-    return render(request, "users/district/validated_reports.html")
+
+    from reports.models import IssueReport
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can access validated reports."
+        )
+
+    reports = IssueReport.objects.filter(status="Validated").select_related(
+        "citizen", "screened_by__user"
+    ).order_by("-screened_date")
+
+    return render(request, "users/district/validated_reports.html", {
+        "reports": reports,
+    })
 
 @login_required
 def work_orders(request):
@@ -605,7 +647,7 @@ def view_report_history_detail(request, pk):
 
     report = get_object_or_404(
         IssueReport.objects.select_related('citizen', 'screened_by__user', 'inspected_by__user')
-        .prefetch_related('photos', 'inspection_photos', 'work_order__repair_updates__photos'),
+        .prefetch_related('photos', 'inspection_photos', 'info_requests', 'work_order__repair_updates__photos'),
         pk=pk
     )
 
@@ -737,6 +779,9 @@ def open_notification(request, pk):
     notification.is_read = True
     notification.save(update_fields=["is_read"])
 
+    if notification.kind == "follow_up" and request.user.role in ("fru", "district_engineer"):
+        return redirect("follow_ups")
+
     report = notification.report
     if report is None:
         return redirect("notifications")
@@ -769,3 +814,71 @@ def role_required(*roles):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
+
+
+
+@role_required("fru", "district_engineer")
+def follow_ups(request):
+
+    from reports.models import FollowUpRequest
+
+    status_filter = request.GET.get("status", "Pending")
+
+    items = FollowUpRequest.objects.select_related(
+        "report", "citizen", "responded_by__user"
+    )
+
+    if status_filter in ("Pending", "Answered"):
+        items = items.filter(status=status_filter)
+
+    # Oldest question first while pending, newest first otherwise
+    items = items.order_by("submitted_date" if status_filter == "Pending" else "-submitted_date")
+
+    return render(request, "users/follow_ups.html", {
+        "items": items,
+        "status_filter": status_filter,
+        "pending_total": FollowUpRequest.objects.filter(status="Pending").count(),
+        "answered_total": FollowUpRequest.objects.filter(status="Answered").count(),
+    })
+
+
+@role_required("fru", "district_engineer")
+def reply_follow_up(request, pk):
+
+    from reports.models import FollowUpRequest
+    from reports.notifications import notify_users
+    from django.utils import timezone as dj_timezone
+
+    if request.method != "POST":
+        return redirect("follow_ups")
+
+    follow_up = get_object_or_404(
+        FollowUpRequest.objects.select_related("report", "citizen"), pk=pk
+    )
+
+    if not hasattr(request.user, "personnel"):
+        messages.error(request, "Your account has no personnel record, so it can't reply.")
+        return redirect("follow_ups")
+
+    if follow_up.status == "Answered":
+        messages.info(request, "This follow-up was already answered.")
+        return redirect("follow_ups")
+
+    response_text = request.POST.get("response", "").strip()
+    if not response_text:
+        messages.error(request, "Please write a reply.")
+        return redirect("follow_ups")
+
+    follow_up.response = response_text
+    follow_up.status = "Answered"
+    follow_up.responded_by = request.user.personnel
+    follow_up.responded_date = dj_timezone.now()
+    follow_up.save()
+
+    notify_users(
+        [follow_up.citizen], "follow_up_reply", "Reply to your follow-up",
+        response_text, follow_up.report,
+    )
+
+    messages.success(request, "Reply sent to the citizen.")
+    return redirect("follow_ups")

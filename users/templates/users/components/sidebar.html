@@ -115,6 +115,11 @@
                 <a href="{% url 'work_orders' %}" class="{% if request.resolver_match.url_name == 'work_orders' or request.resolver_match.url_name == 'create_work_order' %}active{% endif %}">
                     <i class="fa-solid fa-file-signature"></i><span>Work Orders</span>
                 </a>
+
+                <a href="{% url 'validated_reports' %}" class="{% if request.resolver_match.url_name == 'validated_reports' %}active{% endif %}">
+                    <i class="fa-solid fa-circle-check"></i><span>Validated Reports</span>
+                </a>
+                
                 <a href="{% url 'repair_monitoring' %}" class="{% if request.resolver_match.url_name == 'repair_monitoring' %}active{% endif %}">
                     <i class="fa-solid fa-wrench"></i><span>Repair Monitoring</span>
                 </a>
@@ -134,6 +139,14 @@
                     <i class="fa-solid fa-inbox"></i><span>Pending Reports</span>
                 </a>
 
+            {% endif %}
+            {% if request.user.role == "district_engineer" or request.user.role == "fru" %}
+            <a href="{% url 'follow_ups' %}" class="{% if request.resolver_match.url_name == 'follow_ups' %}active{% endif %}">
+                <i class="fa-solid fa-comments"></i><span>Follow-ups</span>
+                {% if pending_follow_ups_count %}
+                <span style="margin-left:auto; background:#ef4444; color:white; border-radius:10px; padding:1px 8px; font-size:12px; font-weight:bold;">{{ pending_follow_ups_count }}</span>
+                {% endif %}
+            </a>
             {% endif %}
             <a href="{% url 'notifications' %}" class="{% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
                 <i class="fa-solid fa-bell"></i><span>Notifications</span>

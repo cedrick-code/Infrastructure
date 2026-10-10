@@ -6,6 +6,7 @@ from .views import (
     FieldEngineerListView, SubmitRepairUpdateView, RespondToInfoRequestView,
     NotificationListView, UnreadNotificationCountView,
     MarkNotificationReadView, MarkAllNotificationsReadView, SubmitFeedbackView,
+    SubmitFollowUpView, MyInspectionListView,
 )
 
 urlpatterns = [
@@ -25,4 +26,6 @@ urlpatterns = [
     path('notifications/read-all/', MarkAllNotificationsReadView.as_view(), name='notifications-read-all'),
     path('notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='notification-read'),
     path('feedback/', SubmitFeedbackView.as_view(), name='submit-feedback'),
+    path('follow-ups/', SubmitFollowUpView.as_view(), name='submit-follow-up'),
+    path('my-inspections/', MyInspectionListView.as_view(), name='my-inspections'),
 ]

@@ -5,7 +5,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Infrastructure
 from django.contrib import messages
 
+@login_required
 def infrastructure_list(request):
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can manage infrastructure."
+        )
 
     infrastructures = Infrastructure.objects.all()
 
@@ -159,6 +165,11 @@ def view_infrastructure(request, infrastructure_id):
 @login_required
 def delete_infrastructure(request, infrastructure_id):
 
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can manage infrastructure."
+        )
+
     if request.method == "POST":
 
         infrastructure = get_object_or_404(
@@ -179,6 +190,11 @@ def delete_infrastructure(request, infrastructure_id):
 
 @login_required
 def map(request):
+
+    if request.user.role != "district_engineer":
+        return HttpResponseForbidden(
+            "Only District Engineer can view the map."
+        )
 
     infrastructure_data = list(
         Infrastructure.objects.values(

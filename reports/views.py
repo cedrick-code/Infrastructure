@@ -2,15 +2,18 @@ from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .models import (
     IssueReport, ReportPhoto, InspectionPhoto, WorkOrder,
     RepairUpdate, RepairUpdatePhoto, InfoRequest, Notification, Feedback,
+    FollowUpRequest, InspectionValidation,
 )
 from .serializers import (
     IssueReportSerializer, WorkOrderSerializer, RepairUpdateSerializer,
-    NotificationSerializer, FeedbackSerializer,
+    NotificationSerializer, FeedbackSerializer, FollowUpRequestSerializer,
+    MyInspectionSerializer,
 )
 from .notifications import notify_users, notify_role
 
@@ -70,31 +73,75 @@ class SubmitInspectionView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         if request.user.role != 'field_engineer':
             return Response({'error': 'Only field engineers can submit inspections.'}, status=403)
+        if not hasattr(request.user, 'personnel'):
+            return Response({'error': 'Your account has no personnel record.'}, status=403)
 
         report = self.get_object()
-        report.inspection_remarks = request.data.get('inspection_remarks', '')
-        report.recommended_action = request.data.get('recommended_action', '')
+
+        if report.status != 'Validated':
+            return Response({'error': 'This report is not waiting for inspection.'}, status=400)
+
+        validation_result = request.data.get('validation_result', 'Confirmed')
+        if validation_result not in ('Confirmed', 'Not Confirmed'):
+            return Response({'error': 'Invalid validation result.'}, status=400)
+
+        severity_rating = request.data.get('severity_rating') or report.severity_level
+        if severity_rating not in ('Low', 'Medium', 'High'):
+            return Response({'error': 'Invalid severity rating.'}, status=400)
+
+        findings = request.data.get('inspection_remarks', '').strip()
+        recommended = request.data.get('recommended_action', '').strip()
+        comments = request.data.get('comments', '').strip()
+
+        if not findings:
+            return Response({'error': 'Please describe your findings.'}, status=400)
+        if validation_result == 'Confirmed' and not recommended:
+            return Response({'error': 'Please add a recommended action.'}, status=400)
+
+        InspectionValidation.objects.create(
+            report=report,
+            inspected_by=request.user.personnel,
+            validation_result=validation_result,
+            severity_rating=severity_rating,
+            findings=findings,
+            recommended_repairs=recommended,
+            comments=comments,
+        )
+
+        # Keep the older fields in sync so existing screens still work
+        report.inspection_remarks = findings
+        report.recommended_action = recommended
         report.inspected_by = request.user.personnel
         report.inspection_date = timezone.now()
-        report.status = 'Inspected'
+        report.status = 'Inspected' if validation_result == 'Confirmed' else 'Not Confirmed'
         report.save()
 
         for key in request.FILES:
             if key.startswith('inspection_photo_'):
                 InspectionPhoto.objects.create(report=report, image=request.FILES[key])
 
-        notify_role(
-            'district_engineer', 'report_inspected', 'Inspection completed',
-            f'"{report.title}" was inspected and is ready for a work order.', report,
-        )
-        notify_users(
-            [report.citizen], 'report_inspected', 'Your report was inspected',
-            f'A field engineer inspected "{report.title}".', report,
-        )
+        if validation_result == 'Confirmed':
+            notify_role(
+                'district_engineer', 'report_inspected', 'Inspection completed',
+                f'"{report.title}" was inspected and is ready for a work order.', report,
+            )
+            notify_users(
+                [report.citizen], 'report_inspected', 'Your report was inspected',
+                f'A field engineer inspected "{report.title}".', report,
+            )
+        else:
+            notify_role(
+                'district_engineer', 'report_not_confirmed', 'Problem not confirmed',
+                f'The field engineer could not confirm the problem in "{report.title}".', report,
+            )
+            notify_users(
+                [report.citizen], 'report_not_confirmed', 'Problem could not be confirmed',
+                f'A field engineer visited the location of "{report.title}" but could not confirm the problem.',
+                report,
+            )
 
         serializer = self.get_serializer(report)
         return Response(serializer.data)
-
 
 class InspectedReportListView(generics.ListAPIView):
     """For District Engineer: reports ready for a work order."""
@@ -115,7 +162,7 @@ class CreateWorkOrderView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         if self.request.user.role != 'district_engineer':
-            raise PermissionError('Only district engineers can create work orders.')
+            raise PermissionDenied('Only district engineers can create work orders.')
 
         work_order = serializer.save(issued_by=self.request.user.personnel)
         report = work_order.report
@@ -260,7 +307,7 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user)[:50]
+        return Notification.objects.filter(recipient=self.request.user)[:300]
 
 
 class UnreadNotificationCountView(APIView):
@@ -311,3 +358,50 @@ class SubmitFeedbackView(generics.CreateAPIView):
 
         serializer.save(user=request.user)
         return Response(serializer.data, status=201)
+
+class SubmitFollowUpView(generics.CreateAPIView):
+    """Citizen: ask for an update on their own report."""
+    queryset = FollowUpRequest.objects.all()
+    serializer_class = FollowUpRequestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        if request.user.role != 'citizen':
+            return Response({'error': 'Only citizens can send follow-ups.'}, status=403)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        report = serializer.validated_data['report']
+
+        if report.citizen != request.user:
+            return Response({'error': 'You can only follow up on your own report.'}, status=403)
+        if report.follow_ups.filter(status='Pending').exists():
+            return Response(
+                {'error': 'You already have a pending follow-up on this report. Please wait for a reply.'},
+                status=400,
+            )
+
+        serializer.save(citizen=request.user)
+
+        for role in ('fru', 'district_engineer'):
+            notify_role(
+                role, 'follow_up', 'Citizen follow-up',
+                f'A citizen asked for an update on "{report.title}".', report,
+            )
+
+        return Response(serializer.data, status=201)
+    
+class MyInspectionListView(generics.ListAPIView):
+    """Field Engineer: the inspections I submitted."""
+    serializer_class = MyInspectionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role != 'field_engineer' or not hasattr(user, 'personnel'):
+            return InspectionValidation.objects.none()
+        return InspectionValidation.objects.filter(
+            inspected_by=user.personnel
+        ).select_related('report', 'inspected_by__user').prefetch_related(
+            'report__inspection_photos'
+        ).order_by('-inspection_date')
