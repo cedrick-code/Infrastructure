@@ -498,6 +498,7 @@ def create_work_order(request, pk):
         WorkOrder.objects.create(
             report=report,
             issued_by=request.user.personnel,
+            approved_by=request.user.personnel,
             assigned_field_engineer=assigned_engineer,
             work_order_details=work_order_details,
         )

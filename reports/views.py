@@ -164,7 +164,10 @@ class CreateWorkOrderView(generics.CreateAPIView):
         if self.request.user.role != 'district_engineer':
             raise PermissionDenied('Only district engineers can create work orders.')
 
-        work_order = serializer.save(issued_by=self.request.user.personnel)
+        work_order = serializer.save(
+            issued_by=self.request.user.personnel,
+            approved_by=self.request.user.personnel,
+        )
         report = work_order.report
         report.status = 'Work Order Issued'
         report.save()

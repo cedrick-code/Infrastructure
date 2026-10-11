@@ -85,6 +85,10 @@ class WorkOrder(models.Model):
         'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='issued_work_orders'
     )
+    approved_by = models.ForeignKey(
+        'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='approved_work_orders'
+    )
     assigned_field_engineer = models.ForeignKey(
         'users.Personnel', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='assigned_work_orders'

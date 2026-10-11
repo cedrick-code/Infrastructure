@@ -46,24 +46,29 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     report_title = serializers.CharField(source='report.title', read_only=True)
     report_id = serializers.IntegerField(source='report.id', read_only=True)
     assigned_field_engineer_name = serializers.SerializerMethodField()
+    approved_by_name = serializers.SerializerMethodField()
     repair_updates = RepairUpdateSerializer(many=True, read_only=True)
 
     class Meta:
         model = WorkOrder
         fields = [
             'id', 'report', 'report_id', 'report_title',
-            'issued_by', 'assigned_field_engineer', 'assigned_field_engineer_name',
+            'issued_by', 'approved_by', 'approved_by_name',
             'work_order_details', 'status', 'date_issued', 'date_completed',
             'update_requested', 'update_request_message', 'update_requested_date',
             'repair_updates',
         ]
-        read_only_fields = ['issued_by', 'date_issued', 'status', 'date_completed']
+        read_only_fields = ['issued_by', 'approved_by', 'date_issued', 'status', 'date_completed']
 
     def get_assigned_field_engineer_name(self, obj):
         if obj.assigned_field_engineer:
             return obj.assigned_field_engineer.user.get_full_name()
         return None
-
+    
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.user.get_full_name()
+        return None
 
 class InfoRequestSerializer(serializers.ModelSerializer):
     requested_by_name = serializers.SerializerMethodField()
