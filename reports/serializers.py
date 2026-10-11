@@ -53,6 +53,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         model = WorkOrder
         fields = [
             'id', 'report', 'report_id', 'report_title',
+            'assigned_field_engineer', 'assigned_field_engineer_name',
             'issued_by', 'approved_by', 'approved_by_name',
             'work_order_details', 'status', 'date_issued', 'date_completed',
             'update_requested', 'update_request_message', 'update_requested_date',
@@ -64,7 +65,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         if obj.assigned_field_engineer:
             return obj.assigned_field_engineer.user.get_full_name()
         return None
-    
+
     def get_approved_by_name(self, obj):
         if obj.approved_by:
             return obj.approved_by.user.get_full_name()
